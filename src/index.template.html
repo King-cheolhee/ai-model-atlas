@@ -93,7 +93,8 @@ section.controls{position:sticky;top:0;z-index:20;background:var(--bg);
   padding:var(--sp-4) 0;border-bottom:1px solid var(--line)}
 .ctl-row{display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:center}
 .ctl-row + .ctl-row{margin-top:var(--sp-3)}
-.ctl-label{font-size:12px;color:var(--ink-3);margin-right:var(--sp-1);flex:none}
+.ctl-label{font-size:12px;color:var(--ink-3);flex:none}
+.fld{display:inline-flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap}
 input[type=search],select{font:400 13.5px var(--font-body);color:var(--ink);
   background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r);
   padding:0 var(--sp-3);height:var(--tap);min-height:var(--tap)}
@@ -190,15 +191,15 @@ footer a{text-decoration:underline;text-underline-offset:2px}
 <section class="controls"><div class="wrap">
   <div class="ctl-row">
     <input type="search" id="q" placeholder="이름·기관·설명 검색 (예: 시계열, 칭화, MIT)" aria-label="모델 검색">
-    <span class="ctl-label">분야</span>
-    <span id="groups"></span>
+    <span class="fld"><span class="ctl-label">분야</span><span id="groups"></span></span>
     <span class="spacer"></span>
     <button class="chip" id="theme" aria-pressed="false" aria-label="어두운 화면 전환" title="어두운 화면 전환">◑</button>
   </div>
   <div class="ctl-row">
-    <span class="ctl-label">장비</span><select id="f-tier" aria-label="필요 장비로 거르기"></select>
-    <span class="ctl-label">라이선스</span><select id="f-lic" aria-label="라이선스로 거르기"></select>
-    <span class="ctl-label">정렬</span><select id="sort" aria-label="정렬 기준"></select>
+    <span class="fld"><label class="ctl-label" for="f-cat">세부 분야</label><select id="f-cat"></select></span>
+    <span class="fld"><label class="ctl-label" for="f-tier">장비</label><select id="f-tier"></select></span>
+    <span class="fld"><label class="ctl-label" for="f-lic">라이선스</label><select id="f-lic"></select></span>
+    <span class="fld"><label class="ctl-label" for="sort">정렬</label><select id="sort"></select></span>
     <span class="spacer"></span>
     <span class="count" id="count"></span>
   </div>
@@ -242,7 +243,7 @@ var TIERS = ['노트북 CPU','8GB GPU','24GB GPU','80GB GPU 1장','GPU 여러 �
 var $ = function(s){return document.querySelector(s)};
 
 /* ── 상태 ── */
-var state = {q:'', groups:new Set(GROUPS.map(function(g){return g.key})), tier:'', lic:'', sort:'pop'};
+var state = {q:'', groups:new Set(GROUPS.map(function(g){return g.key})), cat:'', tier:'', lic:'', sort:'pop'};
 
 /* ── 헤더 통계 ── */
 $('#measured').textContent = MEASURED;
@@ -285,6 +286,14 @@ function fill(sel, opts){
   $(sel).innerHTML = opts.map(function(o){
     return '<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>' }).join('');
 }
+var CATS = [];
+GROUPS.forEach(function(g){
+  var seen = {};
+  ITEMS.forEach(function(i){ if(i.group===g.key && !seen[i.category]){ seen[i.category]=1; CATS.push(i.category) } });
+});
+fill('#f-cat', [['','세부 분야 전체']].concat(CATS.map(function(c){
+  return [c, c+' ('+ITEMS.filter(function(i){return i.category===c}).length+')'];
+})));
 fill('#f-tier', [['','전체']].concat(TIERS.map(function(t){
   var n = ITEMS.filter(function(i){return tierOf(i)===t}).length;
   return [t, t+' ('+n+')'];
@@ -294,9 +303,20 @@ fill('#f-lic', [['','전체'],
   ['care','주의 (미표기·비상업·카피레프트)'],
   ['gated','승인 필요 (gated)']]);
 fill('#sort', [['pop','인기순 (HF 내려받기·★)'],['size','용량 큰 순'],['size-asc','용량 작은 순'],['name','이름순']]);
-['#f-tier','#f-lic','#sort'].forEach(function(s){
-  $(s).addEventListener('change', function(){
-    state[s==='#f-tier'?'tier':s==='#f-lic'?'lic':'sort'] = this.value; render();
+var SELMAP = {'#f-cat':'cat', '#f-tier':'tier', '#f-lic':'lic', '#sort':'sort'};
+Object.keys(SELMAP).forEach(function(sel){
+  $(sel).addEventListener('change', function(){
+    state[SELMAP[sel]] = this.value;
+    /* 세부 분야를 고르면 그 상위 묶음을 켜 준다. 안 그러면 결과가 0이 되어 혼란스럽다 */
+    if(sel === '#f-cat' && this.value){
+      var g = (ITEMS.filter(function(i){return i.category===state.cat})[0]||{}).group;
+      if(g && !state.groups.has(g)){
+        state.groups.add(g);
+        var chip = document.querySelector('#groups .chip[data-g="'+CSS.escape(g)+'"]');
+        if(chip) chip.setAttribute('aria-pressed','true');
+      }
+    }
+    render();
   });
 });
 $('#q').addEventListener('input', function(){ state.q = this.value.trim(); render() });
@@ -346,6 +366,7 @@ function visible(){
   var q = state.q.toLowerCase();
   var out = ITEMS.filter(function(i){
     if(!state.groups.has(i.group)) return false;
+    if(state.cat && i.category !== state.cat) return false;
     if(state.tier && tierOf(i) !== state.tier) return false;
     if(state.lic && licClass(i) !== state.lic) return false;
     if(q){
@@ -508,6 +529,7 @@ $('#sp').addEventListener('click', function(e){
   state.q = ''; $('#q').value = '';
   state.groups = new Set(GROUPS.map(function(g){return g.key}));
   Array.prototype.forEach.call(document.querySelectorAll('#groups .chip'), function(b){ b.setAttribute('aria-pressed','true') });
+  state.cat = ''; $('#f-cat').value = '';
   state.tier = ''; $('#f-tier').value = '';
   state.lic = ''; $('#f-lic').value = '';
   render();
