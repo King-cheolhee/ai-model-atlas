@@ -1,0 +1,12 @@
+# 비밀
+.env
+.env.*
+!.env.example
+
+# 훅 작업파일
+.claude/.review-*
+.claude/.recodex-count
+
+# OS
+Thumbs.db
+.DS_Store

@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ko" data-theme="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>대학·연구소 AI 모델 도감</title>
+<meta name="description" content="대학·공공연구소·기업연구소가 공개한 AI 모델 167종. 로컬 실행 가능 여부, 필요 장비, 라이선스, 설치 링크를 한 화면에서 찾는다.">
+<meta name="color-scheme" content="light dark">
+<!-- FOUC 방지: 렌더 전에 테마를 심는다 -->
+<script>try{var t=localStorage.getItem('atlas-theme');if(t==='dark'||t==='light')document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<style>
+/* ── 폰트: 나눔스퀘어(SIL OFL 1.1), 저장소에 고정 ── */
+@font-face{font-family:'NanumSquare';font-weight:400;font-display:swap;src:url(fonts/NanumSquareR.woff2) format('woff2')}
+@font-face{font-family:'NanumSquare';font-weight:700;font-display:swap;src:url(fonts/NanumSquareB.woff2) format('woff2')}
+@font-face{font-family:'NanumSquare';font-weight:800;font-display:swap;src:url(fonts/NanumSquareEB.woff2) format('woff2')}
+
+/* ── 토큰: 라이트가 기본, 다크는 오버라이드만 ── */
+:root{
+  --bg:#F2F4F1; --surface:#FAFBF9; --ink:#17201C; --ink-2:#47524C; --ink-3:#76817B;
+  --line:#D5DCD7; --line-2:#E4E9E5; --hover:#E8EDE9; --mark:#F1E19A; --mark-ink:#17201C;
+  --band-a:#F6F8F5; --band-b:#ECF0ED;
+  --pred:#A8640E; --sci:#2B7954; --world:#2D5BA2; --tool:#7A4890;
+  --chip-on:#17201C; --chip-on-ink:#F2F4F1;
+  --warn:#A8400E; --warn-bg:#F8EAE2;
+  --font-body:'NanumSquare','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+  --font-mono:ui-monospace,'SFMono-Regular','Consolas','Menlo',monospace;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+  --r:6px; --tap:32px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#101513; --surface:#161C19; --ink:#E3EAE5; --ink-2:#A6B2AB; --ink-3:#7A8780;
+    --line:#2B3530; --line-2:#212925; --hover:#1B231F; --mark:#4A4320; --mark-ink:#F3EAC2;
+    --band-a:#141A17; --band-b:#1A211D;
+    --pred:#E09F4D; --sci:#5CBD89; --world:#84A9EA; --tool:#C396D9;
+    --chip-on:#E3EAE5; --chip-on-ink:#101513;
+    --warn:#E8A57A; --warn-bg:#2A1E18;
+  }
+}
+[data-theme="dark"]{
+  --bg:#101513; --surface:#161C19; --ink:#E3EAE5; --ink-2:#A6B2AB; --ink-3:#7A8780;
+  --line:#2B3530; --line-2:#212925; --hover:#1B231F; --mark:#4A4320; --mark-ink:#F3EAC2;
+  --band-a:#141A17; --band-b:#1A211D;
+  --pred:#E09F4D; --sci:#5CBD89; --world:#84A9EA; --tool:#C396D9;
+  --chip-on:#E3EAE5; --chip-on-ink:#101513;
+  --warn:#E8A57A; --warn-bg:#2A1E18;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.65 var(--font-body);
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 var(--sp-4)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-radius:3px}
+
+/* ── 헤더 ── */
+header.top{padding:var(--sp-7) 0 var(--sp-5);border-bottom:1px solid var(--line)}
+.eyebrow{font:400 11.5px/1.4 var(--font-mono);letter-spacing:.08em;color:var(--ink-3);
+  text-transform:uppercase;margin:0 0 var(--sp-3)}
+h1{font-weight:800;font-size:clamp(28px,1.6rem + 2.2vw,46px);line-height:1.15;margin:0 0 var(--sp-4);letter-spacing:-.02em}
+.lead{max-width:56ch;color:var(--ink-2);margin:0 0 var(--sp-5);font-size:15.5px}
+.head-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--sp-6);align-items:start}
+.stats{border-collapse:collapse;font-size:13px;min-width:210px}
+.stats td{padding:4px 0;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.stats td:first-child{color:var(--ink-2);padding-right:var(--sp-5)}
+.stats td:last-child{text-align:right;font:700 14px var(--font-mono)}
+.stats tr:last-child td{border-bottom:0}
+
+/* ── 산점도 ── */
+section.chart{padding:var(--sp-6) 0 var(--sp-5);border-bottom:1px solid var(--line)}
+.sec-head{display:grid;grid-template-columns:auto minmax(0,1fr);gap:var(--sp-5);
+  align-items:baseline;margin-bottom:var(--sp-4)}
+.sec-head h2{white-space:nowrap}
+h2{font-weight:800;font-size:clamp(19px,1rem + .7vw,26px);margin:0;letter-spacing:-.01em}
+.sec-note{color:var(--ink-2);font-size:13.5px;margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:var(--sp-4);margin:0 0 var(--sp-3);font-size:12.5px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+.chart-box{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);overflow-x:auto}
+svg#sp{display:block;min-width:720px;width:100%;height:330px}
+#sp .tick{font:10.5px var(--font-mono);fill:var(--ink-3)}
+#sp .rowlab{font:700 12px var(--font-body);}
+#sp .band{fill:var(--band-b)}
+#sp .grid{stroke:var(--line-2);stroke-dasharray:2 3}
+#sp circle{cursor:pointer}
+#sp circle:hover{stroke:var(--ink);stroke-width:2}
+
+/* ── 컨트롤 ── */
+section.controls{position:sticky;top:0;z-index:20;background:var(--bg);
+  padding:var(--sp-4) 0;border-bottom:1px solid var(--line)}
+.ctl-row{display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:center}
+.ctl-row + .ctl-row{margin-top:var(--sp-3)}
+.ctl-label{font-size:12px;color:var(--ink-3);margin-right:var(--sp-1);flex:none}
+input[type=search],select{font:400 13.5px var(--font-body);color:var(--ink);
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:0 var(--sp-3);height:var(--tap);min-height:var(--tap)}
+input[type=search]{flex:1 1 240px;max-width:340px}
+select{cursor:pointer}
+.chip{font:700 12.5px var(--font-body);color:var(--ink-2);background:var(--surface);
+  border:1px solid var(--line);border-radius:999px;padding:0 var(--sp-3);
+  height:var(--tap);min-height:var(--tap);min-width:var(--tap);cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px}
+.chip:hover{background:var(--hover)}
+.chip[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-ink);border-color:var(--chip-on)}
+.chip .dot{width:8px;height:8px}
+.spacer{flex:1 1 auto}
+.count{font:400 12.5px var(--font-mono);color:var(--ink-3);white-space:nowrap}
+
+/* ── 표 ── */
+section.list{padding:var(--sp-5) 0 var(--sp-7)}
+table.models{width:100%;border-collapse:collapse}
+table.models thead th{text-align:left;font:700 11.5px/1.3 var(--font-body);color:var(--ink-3);
+  letter-spacing:.04em;padding:0 var(--sp-3) var(--sp-2);border-bottom:1px solid var(--line);
+  white-space:nowrap}
+th.num,td.num{text-align:right;font-family:var(--font-mono)}
+tr.row{border-bottom:1px solid var(--line-2);cursor:pointer}
+tr.row:hover{background:var(--hover)}
+tr.row > td{padding:var(--sp-3);vertical-align:top}
+.m-name{font-weight:800;font-size:14.5px;letter-spacing:-.01em}
+.m-desc{color:var(--ink-2);font-size:13px;margin-top:3px;max-width:62ch}
+.m-org{color:var(--ink-2);font-size:12.5px;max-width:26ch}
+.m-cat{font:400 11px var(--font-mono);color:var(--ink-3);margin-top:4px}
+td.num{font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+.lic{font:700 11px var(--font-mono);color:var(--ink-2);white-space:nowrap}
+.badge{display:inline-block;font:700 10.5px var(--font-mono);padding:1px 6px;border-radius:3px;
+  background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn);margin-left:4px}
+mark{background:var(--mark);color:var(--mark-ink);padding:0 1px;border-radius:2px}
+.bar{display:block;height:3px;border-radius:2px;margin-top:5px;min-width:2px}
+
+/* 확장 영역 */
+tr.detail > td{padding:0 var(--sp-3) var(--sp-4);background:var(--band-a);border-bottom:1px solid var(--line-2)}
+.det{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--sp-4);
+  padding-top:var(--sp-3)}
+.det h3{font:700 11.5px var(--font-body);color:var(--ink-3);letter-spacing:.04em;margin:0 0 var(--sp-2)}
+.det ul{list-style:none;margin:0;padding:0;font-size:13px}
+.det li{padding:3px 0;word-break:break-all}
+.det a{color:var(--ink);text-decoration:underline;text-underline-offset:2px;
+  display:inline-flex;align-items:center;min-height:24px}
+.det a:hover{background:var(--hover)}
+.kv{font-size:13px;color:var(--ink-2)}
+.kv b{color:var(--ink);font-weight:700}
+.note-box{font-size:12.5px;color:var(--ink-2);border-left:2px solid var(--line);padding-left:var(--sp-3)}
+
+.empty{padding:var(--sp-7) 0;text-align:center;color:var(--ink-3)}
+
+/* ── 푸터 ── */
+footer{border-top:1px solid var(--line);padding:var(--sp-5) 0 var(--sp-7);
+  color:var(--ink-3);font-size:12.5px}
+footer p{margin:0 0 var(--sp-2);max-width:76ch}
+footer a{text-decoration:underline;text-underline-offset:2px}
+
+@media (max-width:760px){
+  .head-grid{grid-template-columns:1fr}
+  .sec-head{grid-template-columns:1fr;gap:var(--sp-2)}
+  thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  tr.row{display:grid;grid-template-columns:1fr auto;gap:0 var(--sp-3);padding:var(--sp-3) 0}
+  tr.row > td{padding:2px var(--sp-1);border:0}
+  tr.row > td:nth-child(1){grid-column:1/-1}
+  .m-desc{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap head-grid">
+  <div>
+    <p class="eyebrow">GITHUB · HUGGING FACE API 실측 · <span id="measured"></span></p>
+    <h1>대학·연구소 AI 모델 도감</h1>
+    <p class="lead">대학과 공공·기업 연구소가 공개한 AI 모델 <b id="n-total"></b>종을 분야별로 모았다.
+      전부 내 PC에 받아 돌리는 오픈소스이고, 가려야 할 것은 값이 아니라 <b>필요한 장비</b>와 <b>라이선스</b>다.
+      줄을 누르면 내려받는 곳과 크기별 변형이 펼쳐진다.</p>
+  </div>
+  <table class="stats"><tbody id="stats"></tbody></table>
+</div></header>
+
+<section class="chart"><div class="wrap">
+  <div class="sec-head">
+    <h2 id="range-title">용량 한눈에</h2>
+    <p class="sec-note">점 하나가 모델 하나다. 가로축은 내려받을 파일 크기(로그 눈금),
+      배경 띠는 그 크기를 돌리는 데 대략 필요한 장비다. 점을 누르면 아래 표의 해당 줄로 간다.</p>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="chart-box"><svg id="sp" role="img" aria-label="모델 파일 용량 분포 산점도"></svg></div>
+</div></section>
+
+<section class="controls"><div class="wrap">
+  <div class="ctl-row">
+    <input type="search" id="q" placeholder="이름·기관·설명 검색 (예: 시계열, 칭화, MIT)" aria-label="모델 검색">
+    <span class="ctl-label">분야</span>
+    <span id="groups"></span>
+    <span class="spacer"></span>
+    <button class="chip" id="theme" aria-pressed="false" aria-label="어두운 화면 전환" title="어두운 화면 전환">◑</button>
+  </div>
+  <div class="ctl-row">
+    <span class="ctl-label">장비</span><select id="f-tier" aria-label="필요 장비로 거르기"></select>
+    <span class="ctl-label">라이선스</span><select id="f-lic" aria-label="라이선스로 거르기"></select>
+    <span class="ctl-label">정렬</span><select id="sort" aria-label="정렬 기준"></select>
+    <span class="spacer"></span>
+    <span class="count" id="count"></span>
+  </div>
+</div></section>
+
+<section class="list"><div class="wrap">
+  <table class="models">
+    <thead><tr>
+      <th scope="col">모델</th><th scope="col">기관</th><th scope="col">라이선스</th>
+      <th scope="col" class="num">용량</th><th scope="col">필요 장비</th><th scope="col" class="num">인기</th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <p class="empty" id="empty" hidden>조건에 맞는 모델이 없다. 검색어나 필터를 줄여 본다.</p>
+</div></section>
+
+<footer><div class="wrap">
+  <p><b>데이터 출처</b> — 공개 공유된 Claude 아티팩트 「대학·연구소 AI 모델 도감」(GitHub·Hugging Face API 실측, 2026-09-11)에서
+     사실 데이터(모델명·기관·라이선스·용량·파라미터·링크)를 가져왔다.
+     <b>한 줄 설명은 원문을 쓰지 않고 새로 작성했다.</b></p>
+  <p><b>검증</b> — 수록된 GitHub·Hugging Face 링크 293건을 2026-09-11에 전수 조회해 모두 정상 응답을 확인했다.
+     TiRex·TabPFN은 라이선스 원문을 직접 대조했다. 그 밖의 값은 원 데이터를 그대로 옮긴 것이며 개별 검증하지 않았다.</p>
+  <p><b>주의</b> — 용량·별점·라이선스는 바뀐다. 이 페이지는 <span id="measured2"></span> 시점 스냅샷이고,
+     정본은 언제나 각 저장소다. 내려받기 전에 링크를 열어 확인한다.</p>
+  <p>본문 글꼴 <b>나눔스퀘어</b> © NAVER Corporation, <a href="fonts/LICENSE.txt">SIL Open Font License 1.1</a>.</p>
+</div></footer>
+
+<script id="atlas-data" type="application/json">{"measured":"2026-09-11","items":[{"name":"Chronos-2 / Chronos-Bolt","category":"시계열·표 데이터 예측","group":"예측","org":"Amazon Science (AWS AI Labs)","org_type":"기업 연구소","desc":"과거 숫자 기록만 넣으면 앞으로의 값을 범위로 답해 주는 범용 예측기. 따로 학습시키지 않고 바로 쓴다.","license":"Apache-2.0","weights":"478 MB","bytes":477930472,"tier":"노트북 CPU","params_ko":"1.2억","variant_range":"191 MB ~ 2.8 GB","hf_downloads":33263457,"stars":5843,"gh_url":"https://github.com/amazon-science/chronos-forecasting","pushed":"2026-09-08","variants":[{"id":"amazon/chronos-2","url":"https://huggingface.co/amazon/chronos-2","size":"478 MB"},{"id":"amazon/chronos-bolt-base","url":"https://huggingface.co/amazon/chronos-bolt-base","size":"821 MB"},{"id":"amazon/chronos-bolt-small","url":"https://huggingface.co/amazon/chronos-bolt-small","size":"191 MB"},{"id":"amazon/chronos-t5-large","url":"https://huggingface.co/amazon/chronos-t5-large","size":"2.8 GB"}]},{"name":"TimesFM","category":"시계열·표 데이터 예측","group":"예측","org":"Google Research","org_type":"기업 연구소","desc":"구글이 1,000억 개 시점으로 미리 학습시켜 둔 예측기. 수요·방문자처럼 패턴이 반복되는 데이터에 강하다.","license":"Apache-2.0","weights":"925 MB","bytes":925181104,"tier":"노트북 CPU","params_ko":"2.3억","variant_range":"925 MB ~ 2.0 GB","hf_downloads":1921070,"stars":32204,"gh_url":"https://github.com/google-research/timesfm","pushed":"2026-09-09","variants":[{"id":"google/timesfm-2.5-200m-pytorch","url":"https://huggingface.co/google/timesfm-2.5-200m-pytorch","size":"925 MB"},{"id":"google/timesfm-2.0-500m-pytorch","url":"https://huggingface.co/google/timesfm-2.0-500m-pytorch","size":"2.0 GB"}]},{"name":"Moirai (uni2ts)","category":"시계열·표 데이터 예측","group":"예측","org":"Salesforce AI Research","org_type":"기업 연구소","desc":"분 단위와 월 단위가 섞여 있어도 한 모델로 처리하는 예측기와 학습 도구.","license":"Apache-2.0","weights":"46 MB","bytes":45557824,"tier":"노트북 CPU","params_ko":"1,139만","variant_range":"46 MB ~ 1.2 GB","hf_downloads":215863,"stars":1588,"gh_url":"https://github.com/SalesforceAIResearch/uni2ts","pushed":"2026-06-02","variants":[{"id":"Salesforce/moirai-2.0-R-small","url":"https://huggingface.co/Salesforce/moirai-2.0-R-small","size":"46 MB"},{"id":"Salesforce/moirai-1.1-R-large","url":"https://huggingface.co/Salesforce/moirai-1.1-R-large","size":"1.2 GB"},{"id":"Salesforce/moirai-1.1-R-base","url":"https://huggingface.co/Salesforce/moirai-1.1-R-base","size":"365 MB"}]},{"name":"Lag-Llama","category":"시계열·표 데이터 예측","group":"예측","org":"Université de Montréal · Mila · McGill · ServiceNow 등","org_type":"대학+기업","desc":"10MB짜리 초경량 확률 예측기. 시계열 파운데이션 모델의 초기작 중 하나다.","license":"Apache-2.0","weights":"10 MB","bytes":9805748,"tier":"노트북 CPU","params_ko":"245만","stars":1603,"gh_url":"https://github.com/time-series-foundation-models/lag-llama","pushed":"2025-06-06","variants":[{"id":"time-series-foundation-models/Lag-Llama","url":"https://huggingface.co/time-series-foundation-models/Lag-Llama","size":"10 MB"}]},{"name":"MOMENT","category":"시계열·표 데이터 예측","group":"예측","org":"Carnegie Mellon University (Auton Lab)","org_type":"대학","desc":"예측만 하지 않고 이상 탐지·결측 보정까지 겸하는 다목적기. 급등락 감지에 돌려 쓸 수 있다.","license":"MIT","weights":"1.4 GB","bytes":1385501256,"tier":"8GB GPU","params_ko":"3.5억","variant_range":"152 MB ~ 1.4 GB","hf_downloads":131601,"stars":838,"gh_url":"https://github.com/moment-timeseries-foundation-model/moment","pushed":"2026-02-10","variants":[{"id":"AutonLab/MOMENT-1-large","url":"https://huggingface.co/AutonLab/MOMENT-1-large","size":"1.4 GB"},{"id":"AutonLab/MOMENT-1-base","url":"https://huggingface.co/AutonLab/MOMENT-1-base","size":"454 MB"},{"id":"AutonLab/MOMENT-1-small","url":"https://huggingface.co/AutonLab/MOMENT-1-small","size":"152 MB"}]},{"name":"Sundial","category":"시계열·표 데이터 예측","group":"예측","org":"Tsinghua University (THUML)","org_type":"대학","desc":"미래를 하나로 찍지 않고 여러 갈래로 그려 불확실성까지 보여 준다.","license":"Apache-2.0","weights":"513 MB","bytes":513341448,"tier":"노트북 CPU","params_ko":"1.3억","hf_downloads":41848,"stars":228,"gh_url":"https://github.com/thuml/Sundial","pushed":"2025-09-12","variants":[{"id":"thuml/sundial-base-128m","url":"https://huggingface.co/thuml/sundial-base-128m","size":"513 MB"}]},{"name":"Timer-XL","category":"시계열·표 데이터 예측","group":"예측","org":"Tsinghua University (THUML)","org_type":"대학","desc":"문장을 이어 쓰듯 다음 구간을 생성하는 방식으로 긴 시계열을 내다본다.","license":"Apache-2.0","weights":"337 MB","bytes":336580760,"tier":"노트북 CPU","params_ko":"8,414만","hf_downloads":4396,"stars":147,"gh_url":"https://github.com/thuml/Timer-XL","pushed":"2025-07-21","variants":[{"id":"thuml/timer-base-84m","url":"https://huggingface.co/thuml/timer-base-84m","size":"337 MB"}]},{"name":"Time-Series-Library (TSLib)","category":"시계열·표 데이터 예측","group":"예측","org":"Tsinghua University (THUML)","org_type":"대학","desc":"시계열 모델 수십 종을 같은 데이터·같은 조건에 붙여 보는 실험대.","license":"MIT","stars":12843,"gh_url":"https://github.com/thuml/Time-Series-Library","pushed":"2026-04-18"},{"name":"Time-MoE","category":"시계열·표 데이터 예측","group":"예측","org":"Squirrel AI · Griffith University · Princeton University","org_type":"대학+기업","desc":"필요한 전문가만 골라 쓰는 구조로 덩치를 키운 예측기. ICLR 2025 발표작.","license":"Apache-2.0","weights":"906 MB","bytes":906450104,"tier":"노트북 CPU","params_ko":"4.5억","variant_range":"227 MB ~ 906 MB","hf_downloads":102697,"stars":999,"gh_url":"https://github.com/Time-MoE/Time-MoE","pushed":"2026-03-21","variants":[{"id":"Maple728/TimeMoE-200M","url":"https://huggingface.co/Maple728/TimeMoE-200M","size":"906 MB"},{"id":"Maple728/TimeMoE-50M","url":"https://huggingface.co/Maple728/TimeMoE-50M","size":"227 MB"}]},{"name":"Tiny Time Mixers (TTM)","category":"시계열·표 데이터 예측","group":"예측","org":"IBM Research","org_type":"기업 연구소","desc":"3MB짜리 초소형 예측기. 파이프라인이 끝까지 도는지 가장 싸게 확인할 때 첫 타자로 쓴다.","license":"Apache-2.0","weights":"3 MB","bytes":3240592,"tier":"노트북 CPU","params_ko":"81만","hf_downloads":326076,"stars":895,"gh_url":"https://github.com/ibm-granite/granite-tsfm","pushed":"2026-09-11","variants":[{"id":"ibm-granite/granite-timeseries-ttm-r2","url":"https://huggingface.co/ibm-granite/granite-timeseries-ttm-r2","size":"3 MB"}]},{"name":"TiRex","category":"시계열·표 데이터 예측","group":"예측","org":"NXAI (JKU Linz 기반)","org_type":"대학+기업","desc":"xLSTM 구조를 쓴 경량 예측기. 크기가 작은데도 단기·장기 벤치마크 상위권에 올랐다.","license":"NXAI Community","weights":"142 MB","bytes":142243285,"tier":"노트북 CPU","params_ko":"3,500만","hf_downloads":427655,"stars":302,"gh_url":"https://github.com/NX-AI/tirex","pushed":"2026-09-09","variants":[{"id":"NX-AI/TiRex","url":"https://huggingface.co/NX-AI/TiRex","size":"142 MB"}]},{"name":"TabPFN","category":"시계열·표 데이터 예측","group":"예측","org":"University of Freiburg · Prior Labs","org_type":"대학+기업","desc":"엑셀 같은 표를 넣으면 몇 초 만에 분류·회귀 답을 내놓는다. 학습 과정 자체가 없다.","license":"Prior Labs","weights":"29 MB","bytes":29017861,"tier":"노트북 CPU","variant_range":"29 MB ~ 44 MB","hf_downloads":73025,"stars":7914,"gh_url":"https://github.com/PriorLabs/TabPFN","pushed":"2026-09-10","variants":[{"id":"Prior-Labs/TabPFN-v2-clf","url":"https://huggingface.co/Prior-Labs/TabPFN-v2-clf","size":"29 MB"},{"id":"Prior-Labs/TabPFN-v2-reg","url":"https://huggingface.co/Prior-Labs/TabPFN-v2-reg","size":"44 MB"}]},{"name":"Time-LLM","category":"시계열·표 데이터 예측","group":"예측","org":"Monash University 등","org_type":"대학","desc":"언어모델을 그대로 시계열 예측기로 바꿔 쓰는 방법. ICLR 2024.","license":"Apache-2.0","stars":2693,"gh_url":"https://github.com/KimMeen/Time-LLM","pushed":"2025-10-15"},{"name":"Informer","category":"시계열·표 데이터 예측","group":"예측","org":"Beihang University","org_type":"대학","desc":"먼 미래까지 한 번에 내다보게 만든 트랜스포머. AAAI 2021 최우수논문.","license":"Apache-2.0","stars":6517,"gh_url":"https://github.com/zhouhaoyi/Informer2020","pushed":"2025-06-20"},{"name":"PatchTST","category":"시계열·표 데이터 예측","group":"예측","org":"Princeton University · IBM Research","org_type":"대학+기업","desc":"시계열을 토막 내 읽어 장기 정확도를 끌어올린 기법. 지금도 표준 비교군으로 쓰인다.","license":"Apache-2.0","stars":2700,"gh_url":"https://github.com/yuqinie98/PatchTST","pushed":"2024-08-12"},{"name":"iTransformer","category":"시계열·표 데이터 예측","group":"예측","org":"Tsinghua University (THUML)","org_type":"대학","desc":"시간이 아니라 변수 쪽에 주의를 걸어 여러 종목을 함께 본다. ICLR 2024.","license":"MIT","stars":2212,"gh_url":"https://github.com/thuml/iTransformer","pushed":"2025-07-17"},{"name":"Toto","category":"시계열·표 데이터 예측","group":"예측","org":"Datadog","org_type":"기업 연구소","desc":"서버·앱 모니터링 지표에 맞춰 만든 예측기. 주가와는 데이터 성격이 다르다.","license":"Apache-2.0","weights":"605 MB","bytes":605239264,"tier":"노트북 CPU","params_ko":"1.5억","hf_downloads":80688,"stars":545,"gh_url":"https://github.com/DataDog/toto","pushed":"2026-09-08","variants":[{"id":"Datadog/Toto-Open-Base-1.0","url":"https://huggingface.co/Datadog/Toto-Open-Base-1.0","size":"605 MB"}]},{"name":"Prophet","category":"시계열·표 데이터 예측","group":"예측","org":"Meta (Facebook)","org_type":"기업 연구소","desc":"추세·계절성·휴일만으로 예측하는 고전 도구. 딥러닝 없이 가볍고, 새 모델이 먼저 넘어야 할 기준선이다.","license":"MIT","stars":20395,"gh_url":"https://github.com/facebook/prophet","pushed":"2026-08-27"},{"name":"Kronos","category":"금융·경제 예측","group":"예측","org":"Tsinghua University","org_type":"대학","desc":"전 세계 45개 거래소 캔들로 학습한, 사실상 유일한 대형 금융 전용 모델. 가격과 변동성을 다룬다.","license":"MIT","weights":"409 MB","bytes":409264008,"tier":"노트북 CPU","params_ko":"1억","variant_range":"16 MB ~ 409 MB","hf_downloads":2805080,"stars":38646,"gh_url":"https://github.com/shiyu-coder/Kronos","pushed":"2026-04-13","variants":[{"id":"NeoQuasar/Kronos-base","url":"https://huggingface.co/NeoQuasar/Kronos-base","size":"409 MB"},{"id":"NeoQuasar/Kronos-small","url":"https://huggingface.co/NeoQuasar/Kronos-small","size":"99 MB"},{"id":"NeoQuasar/Kronos-mini","url":"https://huggingface.co/NeoQuasar/Kronos-mini","size":"16 MB"}]},{"name":"Qlib","category":"금융·경제 예측","group":"예측","org":"Microsoft Research Asia","org_type":"기업 연구소","desc":"데이터 수집부터 팩터·모델·백테스트까지 한 틀에 담은 퀀트 연구 플랫폼.","license":"MIT","stars":48471,"gh_url":"https://github.com/microsoft/qlib","pushed":"2026-09-02"},{"name":"FinGPT","category":"금융·경제 예측","group":"예측","org":"AI4Finance Foundation (Columbia University 출신)","org_type":"공공·비영리 연구소","desc":"뉴스·공시의 어조를 읽도록 오픈 LLM을 싸게 길들이는 도구 모음.","license":"MIT","stars":21235,"gh_url":"https://github.com/AI4Finance-Foundation/FinGPT","pushed":"2026-09-08"},{"name":"FinRL","category":"금융·경제 예측","group":"예측","org":"AI4Finance Foundation · Columbia University","org_type":"대학","desc":"강화학습으로 매매 규칙을 스스로 찾게 하고 검증하는 실험 프레임워크.","license":"MIT","stars":16263,"gh_url":"https://github.com/AI4Finance-Foundation/FinRL","pushed":"2026-07-13"},{"name":"TradingAgents","category":"금융·경제 예측","group":"예측","org":"Tauric Research · UCLA 등","org_type":"대학+기업","desc":"애널리스트·트레이더·리스크 담당 역할을 맡은 LLM들이 서로 토론해 결론을 내는 실험장.","license":"Apache-2.0","stars":104545,"gh_url":"https://github.com/TauricResearch/TradingAgents","pushed":"2026-09-07"},{"name":"GraphCast","category":"날씨·기후·환경","group":"예측","org":"Google DeepMind","org_type":"기업 연구소","desc":"10일 앞 전 지구 날씨를 1분 안팎에 계산해 낸다. Science 2023.","license":"Apache-2.0","weights":"146 MB","bytes":146000000,"tier":"노트북 CPU","stars":7657,"gh_url":"https://github.com/google-deepmind/weathernext","pushed":"2026-09-04","note":"0.25도·37층판 기준. 13층 운영판 144 MB, 1도 소형판 144 MB도 있다. 저장소가 google-deepmind/weathernext로 이름을 바꿨고, 후속작 WeatherNext 2 코드도 함께 있다."},{"name":"GenCast","category":"날씨·기후·환경","group":"예측","org":"Google DeepMind","org_type":"기업 연구소","desc":"시나리오 여러 개를 한꺼번에 만들어 태풍·폭염을 확률로 답한다. Nature 2025.","license":"Apache-2.0","weights":"230 MB","bytes":230100000,"tier":"노트북 CPU","stars":7657,"gh_url":"https://github.com/google-deepmind/weathernext","pushed":"2026-09-04","note":"0.25도·1도·운영판·Mini 4종 모두 230 MB."},{"name":"NeuralGCM","category":"날씨·기후·환경","group":"예측","org":"Google Research (MIT·ECMWF 공동연구)","org_type":"기업 연구소","desc":"물리 기반 대기 모델에 AI를 붙여 며칠 날씨부터 수십 년 기후까지 다룬다.","license":"Apache-2.0","weights":"127 MB","bytes":126700000,"tier":"노트북 CPU","stars":1014,"gh_url":"https://github.com/neuralgcm/neuralgcm","pushed":"2026-09-09","note":"0.7도 결정론 모델 기준. 1.4도 74 MB, 2.8도 58 MB, 확률 모델 47 MB, 강수·증발 모델 45 MB."},{"name":"Aurora","category":"날씨·기후·환경","group":"예측","org":"Microsoft Research","org_type":"기업 연구소","desc":"날씨·대기질·파랑·태풍 경로를 한 모델로 예측한다. Nature 2025.","weights":"5.1 GB","bytes":5096147215,"tier":"8GB GPU","stars":1014,"gh_url":"https://github.com/microsoft/aurora","pushed":"2026-08-19","variants":[{"id":"microsoft/aurora","url":"https://huggingface.co/microsoft/aurora","size":"5.1 GB"}]},{"name":"ClimaX","category":"날씨·기후·환경","group":"예측","org":"Microsoft Research · UCLA","org_type":"대학+기업","desc":"예보·기후전망·상세화 중 필요한 쪽으로 미세조정해 쓰는 범용 기후 모델.","license":"MIT","weights":"1.3 GB","bytes":1261935923,"tier":"8GB GPU","stars":709,"gh_url":"https://github.com/microsoft/ClimaX","pushed":"2023-09-30","variants":[{"id":"tungnd/climax","url":"https://huggingface.co/tungnd/climax","size":"1.3 GB"}],"note":"HF tungnd/climax(MIT)에 체크포인트가 올라와 있으므로 'HF에 없음' 분류에서 빼야 합니다. 같은 저장소에는 vits 99.0 MB, vitb 374.9 MB, vitl 1261.9 MB 체크포인트도 있습니다. 논문 PDF 본문을 읽지 못해 파라미터 수는 null로 두었습니다."},{"name":"Pangu-Weather","category":"날씨·기후·환경","group":"예측","org":"Huawei Cloud","org_type":"기업 연구소","desc":"1시간에서 7일까지의 예보를 기존 수치예보보다 훨씬 빠르게 낸다. Nature 2023.","weights":"1.2 GB","bytes":1181700000,"tier":"8GB GPU","params_ko":"2.6억","stars":1395,"gh_url":"https://github.com/198808xc/Pangu-Weather","pushed":"2024-01-12","noncommercial":true,"note":"1·3·6·24시간 예보용 ONNX 모델 4개(각 약 1.1 GB, 합계 파라미터 약 2억 5,600만). 가중치는 비상업(CC BY-NC-SA 4.0)."},{"name":"FuXi","category":"날씨·기후·환경","group":"예측","org":"Fudan University","org_type":"대학","desc":"15일 앞을 내다보는 푸단대 예보 모델. 계절 예측·앙상블판으로 확장됐다.","weights":"3.9 GB","bytes":3949938963,"tier":"8GB GPU","stars":191,"gh_url":"https://github.com/tpys/FuXi","pushed":"2026-06-18","variants":[{"id":"tpys/fuxi-2.1","url":"https://huggingface.co/tpys/fuxi-2.1","size":"3.9 GB"}],"note":"원판 FuXi는 Zenodo(FuXi_EC.zip 8.6 GB)로 배포. 2026년 6월 FuXi 2.1이 Hugging Face에 올라왔다(CC BY 4.0)."},{"name":"FengWu","category":"날씨·기후·환경","group":"예측","org":"Shanghai AI Laboratory","org_type":"공공·비영리 연구소","desc":"10일 이상 중기 예보에 강한 상하이 AI 연구소의 전 지구 모델.","weights":"1.9 GB","bytes":1930000000,"tier":"8GB GPU","stars":180,"gh_url":"https://github.com/OpenEarthLab/FengWu","pushed":"2025-12-18","note":"공식 배포처는 OneDrive이고, 크기(v1·v2 각 1.93 GB)는 Hugging Face 미러 NickGeneva/earth_ai 기준."},{"name":"FourCastNet 3","category":"날씨·기후·환경","group":"예측","org":"NVIDIA · Lawrence Berkeley National Lab 등","org_type":"대학+기업","desc":"전 지구 날씨를 초고속으로 확률 예측한다. 시나리오를 대량으로 돌릴 때 맞다.","weights":"2.8 GB","bytes":2843497639,"tier":"8GB GPU","params_ko":"7.1억","hf_downloads":859,"stars":400,"gh_url":"https://github.com/NVIDIA/makani","pushed":"2026-09-10","variants":[{"id":"nvidia/fourcastnet3","url":"https://huggingface.co/nvidia/fourcastnet3","size":"2.8 GB"}],"note":"HF nvidia/fourcastnet3(2025-11 생성, Apache-2.0)에 공식 가중치와 파라미터 수가 있으므로 'HF에 없음' 분류에서 빼야 합니다. 논문은 https://arxiv.org/abs/2507.12144 입니다."},{"name":"Earth2Studio","category":"날씨·기후·환경","group":"예측","org":"NVIDIA","org_type":"기업 연구소","desc":"여러 AI 기상 모델을 한 파이썬 도구로 받아 돌리는 실행 패키지.","license":"Apache-2.0","stars":1129,"gh_url":"https://github.com/NVIDIA/earth2studio","pushed":"2026-09-11"},{"name":"AIFS (Anemoi)","category":"날씨·기후·환경","group":"예측","org":"ECMWF (유럽중기예보센터)","org_type":"공공·비영리 연구소","desc":"유럽중기예보센터가 실제 운영 예보에 쓰는 AI 모델과 그 학습 틀.","license":"Apache-2.0","weights":"994 MB","bytes":994084883,"tier":"노트북 CPU","hf_downloads":365,"stars":162,"gh_url":"https://github.com/ecmwf/anemoi-core","pushed":"2026-09-10","variants":[{"id":"ecmwf/aifs-single-1.0","url":"https://huggingface.co/ecmwf/aifs-single-1.0","size":"994 MB"}]},{"name":"ACE2","category":"날씨·기후·환경","group":"예측","org":"Allen Institute for AI (Ai2)","org_type":"공공·비영리 연구소","desc":"수백 년치 기후를 짧은 시간에 흉내 내는 초고속 기후 에뮬레이터.","license":"Apache-2.0","weights":"1.8 GB","bytes":1823641450,"tier":"8GB GPU","hf_downloads":116,"stars":241,"gh_url":"https://github.com/ai2cm/ace","pushed":"2026-09-11","variants":[{"id":"allenai/ACE2-ERA5","url":"https://huggingface.co/allenai/ACE2-ERA5","size":"1.8 GB"}]},{"name":"Prithvi WxC","category":"날씨·기후·환경","group":"예측","org":"NASA · IBM Research","org_type":"공공·비영리 연구소","desc":"NASA 재분석 자료 40년치로 학습한 날씨·기후 기반 모델.","license":"MIT","weights":"28.4 GB","bytes":28447290466,"tier":"80GB GPU 1장","params_ko":"23억","hf_downloads":2138,"stars":202,"gh_url":"https://github.com/NASA-IMPACT/Prithvi-WxC","pushed":"2026-02-05","variants":[{"id":"ibm-nasa-geospatial/Prithvi-WxC-1.0-2300M","url":"https://huggingface.co/ibm-nasa-geospatial/Prithvi-WxC-1.0-2300M","size":"28.4 GB"}]},{"name":"Prithvi-EO-2.0","category":"날씨·기후·환경","group":"예측","org":"NASA · IBM Research","org_type":"공공·비영리 연구소","desc":"위성사진으로 홍수 범위·산불 피해·작물 종류를 읽어 낸다.","license":"MIT","weights":"2.6 GB","bytes":2638214204,"tier":"8GB GPU","params_ko":"6억","variant_range":"1.3 GB ~ 2.6 GB","hf_downloads":19651,"stars":307,"gh_url":"https://github.com/NASA-IMPACT/Prithvi-EO-2.0","pushed":"2025-02-13","variants":[{"id":"ibm-nasa-geospatial/Prithvi-EO-2.0-600M","url":"https://huggingface.co/ibm-nasa-geospatial/Prithvi-EO-2.0-600M","size":"2.6 GB"},{"id":"ibm-nasa-geospatial/Prithvi-EO-2.0-300M","url":"https://huggingface.co/ibm-nasa-geospatial/Prithvi-EO-2.0-300M","size":"1.3 GB"}]},{"name":"TerraMind","category":"날씨·기후·환경","group":"예측","org":"IBM Research · ESA (유럽우주국)","org_type":"공공·비영리 연구소","desc":"위성영상·지형·토지피복을 함께 이해하고 서로 바꿔 그리기까지 한다.","license":"Apache-2.0","weights":"1.5 GB","bytes":1518713958,"tier":"8GB GPU","variant_range":"1.5 GB ~ 3.8 GB","hf_downloads":18051,"stars":317,"gh_url":"https://github.com/IBM/terramind","pushed":"2026-09-07","variants":[{"id":"ibm-esa-geospatial/TerraMind-1.0-base","url":"https://huggingface.co/ibm-esa-geospatial/TerraMind-1.0-base","size":"1.5 GB"},{"id":"ibm-esa-geospatial/TerraMind-1.0-large","url":"https://huggingface.co/ibm-esa-geospatial/TerraMind-1.0-large","size":"3.8 GB"}]},{"name":"Aardvark Weather","category":"날씨·기후·환경","group":"예측","org":"University of Cambridge · Alan Turing Institute · Microsoft Research","org_type":"대학","desc":"위성 원자료부터 예보까지 AI 하나로 처리한다. 데스크톱급 연산으로 돈다. Nature 2025.","license":"CC0-1.0","weights":"14.7 GB","bytes":14670600000,"tier":"24GB GPU","stars":221,"gh_url":"https://github.com/anna-allen/aardvark-weather-public","pushed":"2025-05-17","note":"가중치는 Hugging Face 데이터셋 저장소 av555/aardvark-weather의 trained_model 폴더(파일 73개 합계)."},{"name":"Stormer","category":"날씨·기후·환경","group":"예측","org":"UCLA","org_type":"대학","desc":"단순한 구조로 2주 앞까지 예측하면서 적은 연산으로 상위권 성능을 낸다.","license":"MIT","weights":"5.6 GB","bytes":5625590679,"tier":"8GB GPU","stars":86,"gh_url":"https://github.com/tung-nd/stormer","pushed":"2025-03-17","variants":[{"id":"tungnd/stormer","url":"https://huggingface.co/tungnd/stormer","size":"5.6 GB"}],"note":"README가 HF tungnd/stormer(MIT)의 1.40625도 체크포인트 2종을 안내하므로 HF에 가중치가 있습니다. 논문(https://arxiv.org/abs/2312.03876)에는 ViT-S/B/L급 세 변형과 최대 모델의 구조(24블록, 은닉 차원 1024, 패치 크기 2)만 적혀 있습니다. 정확한 파라미터 수는 나오지 않습니다."},{"name":"NeuralHydrology","category":"날씨·기후·환경","group":"예측","org":"Johannes Kepler University Linz (+Google)","org_type":"대학","desc":"비와 기온으로 하천 유량과 홍수를 예측하는 딥러닝 라이브러리.","license":"BSD-3-Clause","stars":577,"gh_url":"https://github.com/neuralhydrology/neuralhydrology","pushed":"2026-09-01"},{"name":"Mirai","category":"건강·의료 예측","group":"예측","org":"MIT CSAIL · Massachusetts General Hospital","org_type":"대학","desc":"유방촬영 사진 한 세트로 향후 5년 내 유방암 발병 위험을 예측한다.","license":"MIT","stars":164,"gh_url":"https://github.com/yala/Mirai","pushed":"2024-12-02","note":"가중치는 별도 파일이 아니라 OncoServe Docker 이미지 안에 들어 있어 용량이 표기되지 않는다."},{"name":"Sybil","category":"건강·의료 예측","group":"예측","org":"MIT · Massachusetts General Hospital","org_type":"대학","desc":"저선량 흉부 CT 한 번으로 1~6년 뒤 폐암 발병 위험을 예측한다.","license":"MIT","weights":"696 MB","bytes":695500000,"tier":"노트북 CPU","stars":123,"gh_url":"https://github.com/reginabarzilaygroup/Sybil","pushed":"2026-05-27","note":"앙상블 체크포인트 zip(GitHub 릴리스 v1.5.0)."},{"name":"Delphi-2M","category":"건강·의료 예측","group":"예측","org":"EMBL-EBI · DKFZ (독일암연구센터) · University of Copenhagen","org_type":"공공·비영리 연구소","desc":"진단 이력과 생활습관으로 1,000여 개 질병의 향후 20년 위험을 본다. Nature 2025.","license":"MIT","params_ko":"220만","stars":515,"gh_url":"https://github.com/gerstung-lab/Delphi","pushed":"2026-08-07","noncommercial":true,"note":"학습된 가중치는 UK Biobank를 통해서만 배포된다(비상업). 코드는 MIT."},{"name":"life2vec","category":"건강·의료 예측","group":"예측","org":"Technical University of Denmark (DTU) · University of Copenhagen 등","org_type":"대학","desc":"덴마크 600만 명의 인생 기록(학업·직업·병원·소득)으로 조기 사망·성격 등을 예측한다.","license":"MIT","stars":570,"gh_url":"https://github.com/SocialComplexityLab/life2vec","pushed":"2024-02-28","noncommercial":true,"note":"가중치는 비공개. 덴마크 통계청 연구자 접근 제도로만 받을 수 있다."},{"name":"Centaur","category":"인간 행동·사회 시뮬레이션","group":"세계·로봇","org":"Helmholtz Munich","org_type":"공공·비영리 연구소","desc":"심리실험 160개와 선택 1,000만 건으로 학습해 사람의 판단을 예측한다. Nature 2025.","weights":"141 GB","bytes":141107497872,"tier":"GPU 여러 장","params_ko":"706억","variant_range":"16.1 GB ~ 141 GB","hf_downloads":2328,"variants":[{"id":"marcelbinz/Llama-3.1-Centaur-70B","url":"https://huggingface.co/marcelbinz/Llama-3.1-Centaur-70B","size":"141 GB"},{"id":"marcelbinz/Llama-3.1-Minitaur-8B","url":"https://huggingface.co/marcelbinz/Llama-3.1-Minitaur-8B","size":"16.1 GB"}],"noncommercial":true,"note":"Llama 3.1(70B·8B)을 심리실험 데이터로 미세조정한 모델이라 Llama 3.1 라이선스를 따른다."},{"name":"Generative Agents (Smallville)","category":"인간 행동·사회 시뮬레이션","group":"세계·로봇","org":"Stanford University","org_type":"대학","desc":"AI 주민 25명이 사는 마을에서 일상·대화·약속을 사람처럼 재현한다.","license":"Apache-2.0","stars":22087,"gh_url":"https://github.com/joonspk-research/generative_agents","pushed":"2024-08-05"},{"name":"GenAgents (1,000명 시뮬레이션)","category":"인간 행동·사회 시뮬레이션","group":"세계·로봇","org":"Stanford University","org_type":"대학","desc":"실제 1,052명을 인터뷰해 만든 AI 분신이 설문·실험에서 본인의 답을 재현한다.","license":"MIT","stars":605,"gh_url":"https://github.com/StanfordHCI/genagents","pushed":"2024-11-18"},{"name":"Concordia","category":"인간 행동·사회 시뮬레이션","group":"세계·로봇","org":"Google DeepMind","org_type":"기업 연구소","desc":"LLM 에이전트로 사회·경제·협상 상황을 시뮬레이션하는 라이브러리.","license":"Apache-2.0","stars":1684,"gh_url":"https://github.com/google-deepmind/concordia","pushed":"2026-09-10"},{"name":"OASIS","category":"인간 행동·사회 시뮬레이션","group":"세계·로봇","org":"CAMEL-AI (KAUST 등 공동)","org_type":"공공·비영리 연구소","desc":"AI 사용자를 최대 100만 명까지 띄워 SNS 여론 확산과 가짜뉴스 전파를 모의한다.","license":"Apache-2.0","stars":5115,"gh_url":"https://github.com/camel-ai/oasis","pushed":"2026-08-27"},{"name":"AgentSociety","category":"인간 행동·사회 시뮬레이션","group":"세계·로봇","org":"Tsinghua University (FIB Lab)","org_type":"대학","desc":"LLM 주민 1만 명 이상으로 도시 생활과 정책 효과, 여론을 들여다본다.","license":"Apache-2.0","stars":1275,"gh_url":"https://github.com/tsinghua-fib-lab/AgentSociety","pushed":"2026-09-09"},{"name":"Mesa","category":"인간 행동·사회 시뮬레이션","group":"세계·로봇","org":"Project Mesa (오픈소스 커뮤니티)","org_type":"공공·비영리 연구소","desc":"파이썬으로 에이전트 기반 모델을 만드는 프레임워크. 전염병·교통·시장에 쓴다.","license":"Apache-2.0","stars":3834,"gh_url":"https://github.com/mesa/mesa","pushed":"2026-09-08"},{"name":"AlphaFold 3","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"Google DeepMind · Isomorphic Labs","org_type":"기업 연구소","desc":"단백질·DNA·RNA·약물이 결합한 복합체의 입체 구조를 예측한다.","license":"Apache-2.0","stars":8540,"gh_url":"https://github.com/google-deepmind/alphafold3","pushed":"2026-08-19","noncommercial":true,"note":"모델 가중치는 구글 딥마인드에 신청해 승인받아야 받을 수 있다(학술·비상업 용도)."},{"name":"Boltz-2","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"MIT Jameel Clinic · Recursion","org_type":"대학+기업","desc":"AlphaFold3급 구조 예측에 약물이 얼마나 세게 붙는지까지 더했다. MIT라 상업 이용도 된다.","license":"MIT","weights":"2.3 GB","bytes":2286561469,"tier":"8GB GPU","variant_range":"2.3 GB ~ 6.9 GB","stars":4202,"gh_url":"https://github.com/jwohlwend/boltz","pushed":"2026-05-29","variants":[{"id":"boltz-community/boltz-2","url":"https://huggingface.co/boltz-community/boltz-2","size":"2.3 GB"},{"id":"boltz-community/boltz-1","url":"https://huggingface.co/boltz-community/boltz-1","size":"6.9 GB"}]},{"name":"OpenFold","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"Columbia University (AlQuraishi Lab) · OpenFold 컨소시엄","org_type":"대학","desc":"AlphaFold2를 학습 코드까지 통째로 재현한 오픈판.","license":"Apache-2.0","stars":3424,"gh_url":"https://github.com/aqlaboratory/openfold","pushed":"2025-12-16"},{"name":"RFdiffusion","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"University of Washington (Institute for Protein Design)","org_type":"대학","desc":"원하는 기능을 가진 새 단백질을 설계해 낸다. 2024 노벨화학상 연구실 작품.","stars":3043,"gh_url":"https://github.com/RosettaCommons/RFdiffusion","pushed":"2026-07-15"},{"name":"ProteinMPNN","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"University of Washington","org_type":"대학","desc":"설계한 단백질 뼈대에 들어맞는 아미노산 서열을 찾아 준다.","license":"MIT","stars":1846,"gh_url":"https://github.com/dauparas/ProteinMPNN","pushed":"2024-08-14"},{"name":"Evo 2","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"Arc Institute · Stanford University · NVIDIA","org_type":"공공·비영리 연구소","desc":"DNA 9조 염기로 학습해 변이가 질병에 미칠 영향을 읽고 유전체를 설계한다.","license":"Apache-2.0","weights":"82.3 GB","bytes":82253494627,"tier":"GPU 여러 장","params_ko":"400억","variant_range":"2.7 GB ~ 82.3 GB","hf_downloads":3851,"stars":4201,"gh_url":"https://github.com/ArcInstitute/evo2","pushed":"2026-06-19","variants":[{"id":"arcinstitute/evo2_40b","url":"https://huggingface.co/arcinstitute/evo2_40b","size":"82.3 GB"},{"id":"arcinstitute/evo2_7b","url":"https://huggingface.co/arcinstitute/evo2_7b","size":"13.8 GB"},{"id":"arcinstitute/evo2_1b_base","url":"https://huggingface.co/arcinstitute/evo2_1b_base","size":"2.7 GB"}],"note":"400억 파라미터 버전은 대형 GPU가 필요하고, 10억·70억 버전은 더 가볍다."},{"name":"State (가상 세포)","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"Arc Institute","org_type":"공공·비영리 연구소","desc":"약물이나 유전자 조작에 세포가 어떻게 반응할지 미리 들여다본다.","weights":"2.9 GB","bytes":2860276816,"tier":"8GB GPU","params_ko":"7.2억","hf_downloads":662,"stars":678,"gh_url":"https://github.com/ArcInstitute/state","pushed":"2026-07-24","variants":[{"id":"arcinstitute/SE-600M","url":"https://huggingface.co/arcinstitute/SE-600M","size":"2.9 GB"}]},{"name":"scGPT","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"University of Toronto · Vector Institute","org_type":"대학","desc":"3,300만 개 단일세포로 학습해 세포 종류와 유전자 교란 반응을 읽는다.","license":"MIT","stars":1626,"gh_url":"https://github.com/bowang-lab/scGPT","pushed":"2026-04-29"},{"name":"Geneformer","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"Gladstone Institutes · Broad Institute 등","org_type":"공공·비영리 연구소","desc":"수천만 개 단일세포 발현으로 학습해 질병 유전자와 치료 표적 후보를 찾는다.","weights":"1.3 GB","bytes":1265455076,"tier":"8GB GPU","params_ko":"3.2억","hf_downloads":1737,"variants":[{"id":"ctheodoris/Geneformer","url":"https://huggingface.co/ctheodoris/Geneformer","size":"1.3 GB"}]},{"name":"ESM3","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"EvolutionaryScale","org_type":"기업 연구소","desc":"단백질의 서열·구조·기능을 한꺼번에 만들어 내는 모델.","weights":"2.8 GB","bytes":2803646068,"tier":"8GB GPU","hf_downloads":2772,"stars":2948,"gh_url":"https://github.com/Biohub/esm","pushed":"2026-09-08","variants":[{"id":"biohub/esm3-sm-open-v1","url":"https://huggingface.co/biohub/esm3-sm-open-v1","size":"2.8 GB"}]},{"name":"ESM-2","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"Meta FAIR","org_type":"기업 연구소","desc":"단백질 서열만 보고 구조·기능의 특징을 뽑아내는 언어모델.","license":"MIT","weights":"2.6 GB","bytes":2609506392,"tier":"8GB GPU","params_ko":"6.5억","variant_range":"31 MB ~ 60.5 GB","hf_downloads":2073143,"stars":4169,"gh_url":"https://github.com/facebookresearch/esm","pushed":"2024-02-07","variants":[{"id":"facebook/esm2_t33_650M_UR50D","url":"https://huggingface.co/facebook/esm2_t33_650M_UR50D","size":"2.6 GB"},{"id":"facebook/esm2_t36_3B_UR50D","url":"https://huggingface.co/facebook/esm2_t36_3B_UR50D","size":"11.4 GB"},{"id":"facebook/esm2_t48_15B_UR50D","url":"https://huggingface.co/facebook/esm2_t48_15B_UR50D","size":"60.5 GB"},{"id":"facebook/esm2_t6_8M_UR50D","url":"https://huggingface.co/facebook/esm2_t6_8M_UR50D","size":"31 MB"}],"archived":true},{"name":"Chai-1","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"Chai Discovery","org_type":"기업 연구소","desc":"단백질과 약물이 결합한 구조를 예측하는 오픈소스 모델.","license":"Apache-2.0","weights":"633 MB","bytes":633042135,"tier":"노트북 CPU","stars":1993,"gh_url":"https://github.com/chaidiscovery/chai-lab","pushed":"2026-06-30","variants":[{"id":"chaidiscovery/chai-1","url":"https://huggingface.co/chaidiscovery/chai-1","size":"633 MB"}]},{"name":"DiffDock","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"MIT CSAIL","org_type":"대학","desc":"약물 후보 분자가 단백질의 어디에 어떤 자세로 붙는지 예측한다.","license":"MIT","stars":1573,"gh_url":"https://github.com/gcorso/DiffDock","pushed":"2025-05-02"},{"name":"AlphaGenome","category":"생명과학(단백질·DNA·세포)","group":"과학","org":"Google DeepMind","org_type":"기업 연구소","desc":"DNA를 최대 100만 염기까지 읽고 변이가 유전자 발현에 미칠 영향을 예측한다.","license":"Apache-2.0","stars":2086,"gh_url":"https://github.com/google-deepmind/alphagenome","pushed":"2026-09-08"},{"name":"Chemprop","category":"화학·신소재","group":"과학","org":"MIT (Green·Jensen 연구실)","org_type":"대학","desc":"분자 구조로 독성·용해도·항균력을 예측한다. 신규 항생제 발견에 실제로 쓰였다.","stars":2462,"gh_url":"https://github.com/chemprop/chemprop","pushed":"2026-09-01","note":"데이터마다 직접 학습하는 프레임워크라 고정 체크포인트가 없다. 2.2.0부터 사전학습 모델 CheMeleon(1,290만 파라미터)을 불러 시작할 수 있다."},{"name":"MACE","category":"화학·신소재","group":"과학","org":"University of Cambridge 등","org_type":"대학","desc":"원자 사이에 작용하는 힘을 양자계산 수준 정확도로 훨씬 빠르게 계산한다.","weights":"44 MB","bytes":44400000,"tier":"노트북 CPU","params_ko":"469만","stars":1345,"gh_url":"https://github.com/ACEsuit/mace","pushed":"2026-09-09","note":"용량은 공식 릴리스의 medium 체크포인트(2023-12-03-mace-128-L1_epoch-199.model) 기준이며 small은 32.6 MB, large는 63.5 MB입니다. 파라미터 수는 Matbench Discovery 모델 페이지(https://matbench-discovery.materialsproject.org/models/mace-mp-0)에 적힌 medium 기준 값입니다. 같은 릴리스 페이지에서 새 세대 MACE-MPA-0·MACE-OMAT-0 medium은 79.5 MB, MACE-MH-1은 59.2 MB, MACE-POLAR-1은 33~130 MB, 분자용 MACE-OMOL-0 extra-large는 422 MB로 확인됩니다."},{"name":"CHGNet","category":"화학·신소재","group":"과학","org":"UC Berkeley (Ceder Group)","org_type":"대학","desc":"전하까지 반영해 전지 소재의 이온 이동과 상변화를 모사한다.","weights":"5 MB","bytes":4900000,"tier":"노트북 CPU","stars":406,"gh_url":"https://github.com/CederGroupHub/chgnet","pushed":"2026-02-19","note":"파라미터 수는 논문 본문(https://arxiv.org/abs/2302.14231)에 적힌 학습 가능 파라미터 수이고, 용량은 기본 체크포인트 chgnet_0.3.0_e29f68s314m37.pth.tar 파일 크기입니다."},{"name":"MatGL (M3GNet)","category":"화학·신소재","group":"과학","org":"UC San Diego (Materials Virtual Lab)","org_type":"대학","desc":"주기율표 전 원소를 다루는 그래프 신경망으로 물성 예측과 원자 시뮬레이션을 한다.","license":"BSD-3-Clause","stars":571,"gh_url":"https://github.com/materialyzeai/matgl","pushed":"2026-09-07"},{"name":"MatterGen","category":"화학·신소재","group":"과학","org":"Microsoft Research","org_type":"기업 연구소","desc":"원하는 물성을 조건으로 걸면 그에 맞는 새 결정 소재를 만들어 낸다. Nature 2025.","license":"MIT","weights":"461 MB","bytes":461400000,"tier":"노트북 CPU","params_ko":"4,680만","stars":1817,"gh_url":"https://github.com/microsoft/mattergen","pushed":"2026-08-27","variants":[{"id":"microsoft/mattergen","url":"https://huggingface.co/microsoft/mattergen","size":"563 MB"}],"note":"무조건부 기본 모델(mattergen_base) 기준. 물성 조건별 미세조정 체크포인트가 여러 개 함께 들어 있다."},{"name":"fairchem (UMA)","category":"화학·신소재","group":"과학","org":"Meta FAIR (+CMU 등)","org_type":"기업 연구소","desc":"촉매·분자·결정 소재의 원자 시뮬레이션을 하나로 처리하는 범용 모델.","weights":"11.2 GB","bytes":11174706771,"tier":"24GB GPU","hf_downloads":83,"stars":2248,"gh_url":"https://github.com/facebookresearch/fairchem","pushed":"2026-09-10","variants":[{"id":"facebook/UMA","url":"https://huggingface.co/facebook/UMA","size":"11.2 GB"}],"gated":true},{"name":"GNoME","category":"화학·신소재","group":"과학","org":"Google DeepMind","org_type":"기업 연구소","desc":"새로운 안정 결정 220만 개를 찾아낸 소재 발견 모델의 코드와 결과 데이터.","license":"Apache-2.0","stars":1235,"gh_url":"https://github.com/google-deepmind/materials_discovery","pushed":"2026-06-23","note":"모델 정의 코드와 발견한 소재 데이터셋만 공개됐고 학습된 가중치는 없다."},{"name":"Cosmos-Predict2.5","category":"월드 모델·영상 예측","group":"세계·로봇","org":"NVIDIA","org_type":"기업 연구소","desc":"현재 영상과 지시로 그럴듯한 다음 장면을 만들어 로봇·자율주행 학습 데이터로 쓴다.","license":"Apache-2.0","weights":"12.4 GB","bytes":12355480955,"tier":"24GB GPU","params_ko":"20억","variant_range":"12.4 GB ~ 28.7 GB","hf_downloads":12150,"stars":1366,"gh_url":"https://github.com/nvidia-cosmos/cosmos-predict2.5","pushed":"2026-06-08","variants":[{"id":"nvidia/Cosmos-Predict2.5-2B","url":"https://huggingface.co/nvidia/Cosmos-Predict2.5-2B","size":"12.4 GB"},{"id":"nvidia/Cosmos-Predict2.5-14B","url":"https://huggingface.co/nvidia/Cosmos-Predict2.5-14B","size":"28.7 GB"}],"gated":true,"note":"코드는 Apache-2.0이고, HF의 2B·14B 저장소가 모두 200으로 응답했다."},{"name":"V-JEPA 2","category":"월드 모델·영상 예측","group":"세계·로봇","org":"Meta FAIR","org_type":"기업 연구소","desc":"영상으로 세상의 움직임을 익혀, 처음 보는 물체도 계획을 세워 다루게 한다.","license":"MIT","weights":"4.1 GB","bytes":4138311608,"tier":"8GB GPU","params_ko":"10억","variant_range":"1.3 GB ~ 4.1 GB","hf_downloads":391396,"stars":4598,"gh_url":"https://github.com/facebookresearch/vjepa2","pushed":"2026-03-23","variants":[{"id":"facebook/vjepa2-vitg-fpc64-256","url":"https://huggingface.co/facebook/vjepa2-vitg-fpc64-256","size":"4.1 GB"},{"id":"facebook/vjepa2-vitl-fpc64-256","url":"https://huggingface.co/facebook/vjepa2-vitl-fpc64-256","size":"1.3 GB"}]},{"name":"DIAMOND","category":"월드 모델·영상 예측","group":"세계·로봇","org":"University of Geneva · University of Edinburgh · Microsoft Research","org_type":"대학","desc":"게임 화면 자체를 학습해 AI 머릿속에서 게임이 돌아가게 만들었다. NeurIPS 2024.","license":"MIT","weights":"1.5 GB","bytes":1526844223,"tier":"8GB GPU","params_ko":"3.8억","stars":2104,"gh_url":"https://github.com/eloialonso/diamond","pushed":"2024-12-06","variants":[{"id":"eloialonso/diamond","url":"https://huggingface.co/eloialonso/diamond","size":"1.5 GB"}],"note":"CS:GO 모델 기준(업샘플러 51M 포함). Atari 모델은 4M, 게임 26종 각 54 MB."},{"name":"DreamerV3","category":"월드 모델·영상 예측","group":"세계·로봇","org":"Google DeepMind · University of Toronto","org_type":"대학+기업","desc":"머릿속 세계에서 상상 훈련을 반복해 150여 과제를 같은 설정으로 해결한다. Nature 2025.","license":"MIT","params_ko":"1,200만","stars":3764,"gh_url":"https://github.com/danijar/dreamerv3","pushed":"2026-05-25","note":"12M~400M 파라미터 6가지 크기 설정(configs.yaml). 사전학습 체크포인트는 배포하지 않는다."},{"name":"Diffusion Forcing","category":"월드 모델·영상 예측","group":"세계·로봇","org":"MIT","org_type":"대학","desc":"다음 장면 예측과 확산 생성을 합쳐 긴 영상과 로봇 행동 계획을 안정시킨다.","stars":1292,"gh_url":"https://github.com/buoyancy99/diffusion-forcing","pushed":"2026-07-06","note":"후속판 DFoT는 별도 줄에 있다."},{"name":"Open-Oasis","category":"월드 모델·영상 예측","group":"세계·로봇","org":"Decart · Etched","org_type":"기업 연구소","desc":"키 입력에 따라 마인크래프트 같은 화면을 실시간으로 그려 낸다.","license":"MIT","weights":"2.4 GB","bytes":2431808520,"tier":"8GB GPU","params_ko":"5억","hf_downloads":318,"stars":2131,"gh_url":"https://github.com/etched-ai/open-oasis","pushed":"2024-11-08","variants":[{"id":"Etched/oasis-500m","url":"https://huggingface.co/Etched/oasis-500m","size":"2.4 GB"}],"gated":true,"note":"HF 저장소는 동의 후 내려받는 방식(gated=auto)이다. 같은 가중치가 .pt와 .safetensors로 중복돼 있어 전체는 6.70 GB이고, safetensors 두 파일(oasis500m 2.43 GB, vit-l-20 0.92 GB)만 합하면 3.35 GB이다."},{"name":"Matrix-Game","category":"월드 모델·영상 예측","group":"세계·로봇","org":"Skywork AI","org_type":"기업 연구소","desc":"키보드·마우스 조작에 반응해 게임 세계를 실시간으로 만들어 내는 월드 모델.","license":"MIT","weights":"27.9 GB","bytes":27918083911,"tier":"80GB GPU 1장","variant_range":"27.9 GB ~ 69.4 GB","hf_downloads":420,"stars":2329,"gh_url":"https://github.com/SkyworkAI/Matrix-Game","pushed":"2026-03-30","variants":[{"id":"Skywork/Matrix-Game-2.0","url":"https://huggingface.co/Skywork/Matrix-Game-2.0","size":"27.9 GB"},{"id":"Skywork/Matrix-Game-3.0","url":"https://huggingface.co/Skywork/Matrix-Game-3.0","size":"56.6 GB"},{"id":"Skywork/Matrix-Game","url":"https://huggingface.co/Skywork/Matrix-Game","size":"69.4 GB"}],"note":"저장소 하나에 여러 게임용 변형 모델이 함께 들어 있어 합계가 크다. 1.0·2.0·3.0이 HF에 따로 올라와 있다."},{"name":"HunyuanWorld","category":"월드 모델·영상 예측","group":"세계·로봇","org":"Tencent Hunyuan","org_type":"기업 연구소","desc":"문장이나 사진 한 장으로 둘러볼 수 있는 360도 공간을 만들어 낸다.","weights":"478 MB","bytes":478187784,"tier":"노트북 CPU","hf_downloads":4385,"stars":2930,"gh_url":"https://github.com/Tencent-Hunyuan/HunyuanWorld-1.0","pushed":"2026-04-15","variants":[{"id":"tencent/HunyuanWorld-1","url":"https://huggingface.co/tencent/HunyuanWorld-1","size":"478 MB"}],"note":"FLUX.1 기반 LoRA 가중치라서, 실행하려면 FLUX.1 기반 모델을 따로 내려받아야 한다."},{"name":"Open-Sora","category":"월드 모델·영상 예측","group":"세계·로봇","org":"HPC-AI Tech (NUS 출신)","org_type":"기업 연구소","desc":"문장이나 이미지로 영상을 만드는 오픈소스 생성 모델.","license":"Apache-2.0","weights":"23.8 GB","bytes":23802932552,"tier":"80GB GPU 1장","hf_downloads":772,"stars":29768,"gh_url":"https://github.com/hpcaitech/Open-Sora","pushed":"2026-04-09","variants":[{"id":"hpcai-tech/Open-Sora-v2","url":"https://huggingface.co/hpcai-tech/Open-Sora-v2","size":"23.8 GB"}]},{"name":"Wan 2.2","category":"월드 모델·영상 예측","group":"세계·로봇","org":"Alibaba (Tongyi Wanxiang)","org_type":"기업 연구소","desc":"고화질 영상 생성 오픈 모델. 일반 GPU로 돌아가는 소형판도 함께 있다.","license":"Apache-2.0","weights":"20.0 GB","bytes":19999234384,"tier":"24GB GPU","params_ko":"50억","variant_range":"20.0 GB ~ 57.2 GB","hf_downloads":17309,"stars":17460,"gh_url":"https://github.com/Wan-Video/Wan2.2","pushed":"2026-03-17","variants":[{"id":"Wan-AI/Wan2.2-TI2V-5B","url":"https://huggingface.co/Wan-AI/Wan2.2-TI2V-5B","size":"20.0 GB"},{"id":"Wan-AI/Wan2.2-T2V-A14B","url":"https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B","size":"57.2 GB"}]},{"name":"Genesis","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Genesis-Embodied-AI (CMU 주도, 20여 개 대학·연구소)","org_type":"대학","desc":"로봇·물체·유체를 초고속 물리 시뮬레이션하는 로봇 학습 데이터 공장.","license":"Apache-2.0","stars":29930,"gh_url":"https://github.com/Genesis-Embodied-AI/genesis-world","pushed":"2026-09-10"},{"name":"MuJoCo","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Google DeepMind (원 개발: University of Washington)","org_type":"기업 연구소","desc":"로봇·생체역학 연구의 사실상 표준 물리 엔진.","license":"Apache-2.0","stars":15045,"gh_url":"https://github.com/google-deepmind/mujoco","pushed":"2026-09-10"},{"name":"Isaac Lab","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"NVIDIA · ETH Zurich 등","org_type":"대학+기업","desc":"GPU에서 수천 개 환경을 동시에 돌려 로봇을 강화학습시킨다.","license":"BSD-3-Clause","stars":8099,"gh_url":"https://github.com/isaac-sim/IsaacLab","pushed":"2026-09-11"},{"name":"ManiSkill 3","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"UC San Diego (Hao Su Lab)","org_type":"대학","desc":"로봇 팔 조작 기술을 GPU 병렬로 빠르게 학습시키는 시뮬레이터이자 시험지.","license":"Apache-2.0","stars":3311,"gh_url":"https://github.com/mani-skill/ManiSkill","pushed":"2026-08-04"},{"name":"Habitat","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Meta FAIR · Georgia Tech 등","org_type":"대학+기업","desc":"실제 집·사무실을 스캔한 3D 공간에서 길 찾기·물건 찾기 AI를 훈련한다.","license":"MIT","stars":3819,"gh_url":"https://github.com/facebookresearch/habitat-sim","pushed":"2026-07-21"},{"name":"CARLA","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Computer Vision Center (바르셀로나 자치대) · Intel Labs 등","org_type":"대학+기업","desc":"도로·날씨·보행자를 재현한 자율주행 연구용 오픈 시뮬레이터.","license":"MIT","stars":14385,"gh_url":"https://github.com/carla-simulator/carla","pushed":"2026-09-10"},{"name":"Gymnasium","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Farama Foundation","org_type":"공공·비영리 연구소","desc":"강화학습 표준 환경 모음. OpenAI Gym의 후속이다.","license":"MIT","stars":12520,"gh_url":"https://github.com/Farama-Foundation/Gymnasium","pushed":"2026-09-10"},{"name":"Craftax","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"University of Oxford","org_type":"대학","desc":"JAX로 초고속 실행되는 2D 마인크래프트형 강화학습 환경.","license":"MIT","stars":450,"gh_url":"https://github.com/MichaelTMatthews/Craftax","pushed":"2026-06-20","note":"JAX로 작성된 강화학습 환경이어서 배포 가중치가 없다."},{"name":"Voyager","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"NVIDIA · Caltech · UT Austin · Stanford 등","org_type":"대학+기업","desc":"GPT-4가 마인크래프트를 스스로 탐험하며 기술을 쌓아 가는 에이전트.","license":"MIT","stars":7193,"gh_url":"https://github.com/MineDojo/Voyager","pushed":"2024-04-03","note":"GPT-4 API를 불러 움직이는 에이전트라 자체 가중치가 없다."},{"name":"WebArena","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Carnegie Mellon University","org_type":"대학","desc":"실제 같은 쇼핑몰·게시판·지도에서 에이전트의 업무 수행을 평가한다.","license":"Apache-2.0","stars":1607,"gh_url":"https://github.com/web-arena-x/webarena","pushed":"2025-11-26"},{"name":"OSWorld","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"University of Hong Kong (XLang Lab) 등","org_type":"대학","desc":"실제 우분투·윈도우를 조작하는 AI 에이전트를 채점하는 환경.","license":"Apache-2.0","stars":3137,"gh_url":"https://github.com/xlang-ai/OSWorld","pushed":"2026-08-30"},{"name":"SWE-bench","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Princeton University","org_type":"대학","desc":"AI가 실제 깃허브 이슈를 고칠 수 있는지 재는 표준 시험지.","license":"MIT","stars":5822,"gh_url":"https://github.com/SWE-bench/SWE-bench","pushed":"2026-09-02"},{"name":"SWE-agent","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Princeton University · Stanford University","org_type":"대학","desc":"깃허브 이슈를 읽고 스스로 코드를 고쳐 제출하는 코딩 에이전트.","license":"MIT","stars":20297,"gh_url":"https://github.com/SWE-agent/SWE-agent","pushed":"2026-09-07"},{"name":"VISTA","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"MIT CSAIL","org_type":"대학","desc":"실제 주행 영상으로 만든 시뮬레이터. 사고 직전 같은 위험 상황도 재현한다.","stars":409,"gh_url":"https://github.com/vista-simulator/vista","pushed":"2023-11-20","note":"데이터 기반 시뮬레이터라 배포하는 신경망 가중치가 없다."},{"name":"OpenVLA","category":"로봇 AI","group":"세계·로봇","org":"Stanford · UC Berkeley · Toyota Research Institute · Google DeepMind 등","org_type":"대학+기업","desc":"카메라 영상과 말로 된 지시를 받아 로봇 팔 동작을 내놓는 오픈 모델.","license":"MIT","weights":"15.1 GB","bytes":15082600824,"tier":"24GB GPU","params_ko":"75억","hf_downloads":443166,"stars":6991,"gh_url":"https://github.com/openvla/openvla","pushed":"2025-03-23","variants":[{"id":"openvla/openvla-7b","url":"https://huggingface.co/openvla/openvla-7b","size":"15.1 GB"}]},{"name":"Octo","category":"로봇 AI","group":"세계·로봇","org":"UC Berkeley · Stanford · CMU 등","org_type":"대학","desc":"여러 종류의 로봇 팔에 공통으로 쓸 수 있는 가벼운 범용 제어 정책.","license":"MIT","weights":"811 MB","bytes":810624681,"tier":"노트북 CPU","params_ko":"9,300만","variant_range":"547 MB ~ 811 MB","hf_downloads":439,"stars":1771,"gh_url":"https://github.com/octo-models/octo","pushed":"2024-07-31","variants":[{"id":"rail-berkeley/octo-base-1.5","url":"https://huggingface.co/rail-berkeley/octo-base-1.5","size":"811 MB"},{"id":"rail-berkeley/octo-small-1.5","url":"https://huggingface.co/rail-berkeley/octo-small-1.5","size":"547 MB"}]},{"name":"openpi (π0 / π0.5)","category":"로봇 AI","group":"세계·로봇","org":"Physical Intelligence","org_type":"기업 연구소","desc":"빨래 개기·식탁 정리처럼 여러 단계를 거치는 작업을 하는 범용 로봇 모델.","license":"Apache-2.0","weights":"12.0 GB","bytes":12014400000,"tier":"24GB GPU","params_ko":"33억","stars":13753,"gh_url":"https://github.com/Physical-Intelligence/openpi","pushed":"2026-08-24","note":"π0 기준(GCS 공식 체크포인트). π0.5는 12.4 GB. Hugging Face lerobot/pi0_base·pi05_base는 LeRobot 이식판."},{"name":"LeRobot / SmolVLA","category":"로봇 AI","group":"세계·로봇","org":"Hugging Face","org_type":"기업 연구소","desc":"저가 로봇팔로 데이터 수집부터 학습·배포까지 하는 도구. 경량 VLA도 함께 들어 있다.","license":"Apache-2.0","weights":"907 MB","bytes":906712520,"tier":"노트북 CPU","params_ko":"4.5억","hf_downloads":171734,"stars":27400,"gh_url":"https://github.com/huggingface/lerobot","pushed":"2026-09-11","variants":[{"id":"lerobot/smolvla_base","url":"https://huggingface.co/lerobot/smolvla_base","size":"907 MB"}]},{"name":"Diffusion Policy","category":"로봇 AI","group":"세계·로봇","org":"Columbia University · MIT · Toyota Research Institute","org_type":"대학","desc":"사람 시연을 보고 확산모델로 로봇 동작을 만들어 내는 모방학습 기법.","license":"MIT","weights":"1.0 GB","bytes":1044200000,"tier":"8GB GPU","stars":4533,"gh_url":"https://github.com/real-stanford/diffusion_policy","pushed":"2024-12-24","note":"README 예시 체크포인트(PushT, CNN) 한 개 기준. 과제별 체크포인트가 컬럼비아대 서버에 흩어져 있다."},{"name":"RDT-1B","category":"로봇 AI","group":"세계·로봇","org":"Tsinghua University","org_type":"대학","desc":"양팔 로봇 조작을 위해 만든 확산 트랜스포머 기반 모델.","license":"MIT","weights":"2.5 GB","bytes":2456755578,"tier":"8GB GPU","params_ko":"10억","hf_downloads":1403,"stars":1793,"gh_url":"https://github.com/thu-ml/RoboticsDiffusionTransformer","pushed":"2026-01-21","variants":[{"id":"robotics-diffusion-transformer/rdt-1b","url":"https://huggingface.co/robotics-diffusion-transformer/rdt-1b","size":"2.5 GB"}]},{"name":"GR00T N1.5","category":"로봇 AI","group":"세계·로봇","org":"NVIDIA","org_type":"기업 연구소","desc":"휴머노이드 로봇용 범용 기반 모델. 보고 듣고 움직이는 것을 한 번에 다룬다.","license":"Apache-2.0","weights":"5.4 GB","bytes":5448460016,"tier":"8GB GPU","params_ko":"27억","hf_downloads":1243,"stars":8044,"gh_url":"https://github.com/NVIDIA/Isaac-GR00T","pushed":"2026-08-20","variants":[{"id":"nvidia/GR00T-N1.5-3B","url":"https://huggingface.co/nvidia/GR00T-N1.5-3B","size":"5.4 GB"}]},{"name":"KAN (pykan)","category":"범용 AI 도구·경량화","group":"도구","org":"MIT · Caltech 등","org_type":"대학","desc":"신경망이 배운 내용을 사람이 읽을 수 있는 수식으로 바꿔 과학 법칙을 찾는 새 구조.","license":"MIT","stars":16334,"gh_url":"https://github.com/KindXiaoming/pykan","pushed":"2025-01-19"},{"name":"Liquid Neural Networks (CfC)","category":"범용 AI 도구·경량화","group":"도구","org":"MIT CSAIL","org_type":"대학","desc":"적은 뉴런으로 시간 흐름을 연속적으로 다룬다. 드론·자율주행 제어에 강하다.","license":"Apache-2.0","stars":1053,"gh_url":"https://github.com/raminmh/CfC","pushed":"2024-07-05"},{"name":"LFM2","category":"범용 AI 도구·경량화","group":"도구","org":"Liquid AI (MIT CSAIL 스핀오프)","org_type":"기업 연구소","desc":"액체 신경망 계열 구조로 노트북·휴대폰에서 빠르게 도는 소형 언어모델.","weights":"2.3 GB","bytes":2340697936,"tier":"8GB GPU","params_ko":"12억","variant_range":"709 MB ~ 2.3 GB","hf_downloads":81616,"variants":[{"id":"LiquidAI/LFM2-1.2B","url":"https://huggingface.co/LiquidAI/LFM2-1.2B","size":"2.3 GB"},{"id":"LiquidAI/LFM2-350M","url":"https://huggingface.co/LiquidAI/LFM2-350M","size":"709 MB"}]},{"name":"AWQ","category":"범용 AI 도구·경량화","group":"도구","org":"MIT Han Lab","org_type":"대학","desc":"LLM을 4비트로 압축해 노트북·휴대폰에서 돌리는 양자화 기법. MLSys 2024 최우수논문.","license":"MIT","stars":3633,"gh_url":"https://github.com/mit-han-lab/llm-awq","pushed":"2025-07-17"},{"name":"StreamingLLM","category":"범용 AI 도구·경량화","group":"도구","org":"MIT Han Lab","org_type":"대학","desc":"대화가 아무리 길어져도 메모리가 늘지 않게 LLM을 계속 돌리는 기법.","license":"MIT","stars":7267,"gh_url":"https://github.com/mit-han-lab/streaming-llm","pushed":"2024-07-11"},{"name":"Nunchaku (SVDQuant)","category":"범용 AI 도구·경량화","group":"도구","org":"MIT Han Lab","org_type":"대학","desc":"이미지 생성 모델을 4비트로 줄여 일반 GPU에서 몇 배 빠르게 만든다.","license":"Apache-2.0","stars":3947,"gh_url":"https://github.com/nunchux-ai/nunchaku","pushed":"2026-09-06"},{"name":"SANA","category":"범용 AI 도구·경량화","group":"도구","org":"NVIDIA · MIT Han Lab","org_type":"대학+기업","desc":"노트북 GPU로도 고해상도 이미지를 빠르게 뽑는 효율형 생성 모델.","license":"Apache-2.0","weights":"16.1 GB","bytes":16104628908,"tier":"24GB GPU","params_ko":"16억","variant_range":"8.8 GB ~ 16.1 GB","stars":9032,"gh_url":"https://github.com/NVlabs/Sana","pushed":"2026-09-11","variants":[{"id":"Efficient-Large-Model/Sana_1600M_1024px_diffusers","url":"https://huggingface.co/Efficient-Large-Model/Sana_1600M_1024px_diffusers","size":"16.1 GB"},{"id":"Efficient-Large-Model/Sana_600M_1024px_diffusers","url":"https://huggingface.co/Efficient-Large-Model/Sana_600M_1024px_diffusers","size":"8.8 GB"}]},{"name":"SEAL","category":"범용 AI 도구·경량화","group":"도구","org":"MIT (Improbable AI Lab)","org_type":"대학","desc":"모델이 스스로 학습 자료를 만들고 자기 가중치를 고치는 자기적응 연구 코드.","license":"MIT","stars":1855,"gh_url":"https://github.com/Continual-Intelligence/SEAL","pushed":"2025-08-01"},{"name":"vLLM","category":"범용 AI 도구·경량화","group":"도구","org":"UC Berkeley Sky Computing Lab","org_type":"대학","desc":"LLM을 빠르고 싸게 서비스하는 추론 엔진. 사실상 업계 표준이다.","license":"Apache-2.0","stars":91455,"gh_url":"https://github.com/vllm-project/vllm","pushed":"2026-09-11"},{"name":"SGLang","category":"범용 AI 도구·경량화","group":"도구","org":"LMSYS (UC Berkeley · Stanford 등)","org_type":"대학","desc":"LLM과 멀티모달 모델 서빙 속도를 끌어올리는 추론 엔진.","license":"Apache-2.0","stars":35795,"gh_url":"https://github.com/sgl-project/sglang","pushed":"2026-09-11"},{"name":"DSPy","category":"범용 AI 도구·경량화","group":"도구","org":"Stanford NLP","org_type":"대학","desc":"프롬프트를 손으로 쓰는 대신 프로그램처럼 짜서 자동으로 다듬는 프레임워크.","license":"MIT","stars":37905,"gh_url":"https://github.com/stanfordnlp/dspy","pushed":"2026-09-10"},{"name":"STORM","category":"범용 AI 도구·경량화","group":"도구","org":"Stanford OVAL","org_type":"대학","desc":"주제만 주면 인터넷을 뒤져 출처 붙은 긴 보고서를 써 낸다.","license":"MIT","weights":"5.6 GB","bytes":5630000000,"tier":"8GB GPU","stars":31265,"gh_url":"https://github.com/stanford-oval/storm","pushed":"2025-09-30","note":"README가 HF tungnd/stormer(MIT)의 1.40625도 체크포인트 2종을 안내하므로 HF에 가중치가 있습니다. 논문(https://arxiv.org/abs/2312.03876)에는 ViT-S/B/L급 세 변형과 최대 모델의 구조(24블록, 은닉 차원 1024, 패치 크기 2)만 적혀 있습니다. 정확한 파라미터 수는 나오지 않습니다."},{"name":"LLaMA-Factory","category":"범용 AI 도구·경량화","group":"도구","org":"Beihang University","org_type":"대학","desc":"오픈 LLM 100여 종을 코드 없이 화면에서 미세조정한다.","license":"Apache-2.0","stars":74699,"gh_url":"https://github.com/hiyouga/LlamaFactory","pushed":"2026-09-09"},{"name":"FlashAttention","category":"범용 AI 도구·경량화","group":"도구","org":"Princeton University · Stanford (Tri Dao)","org_type":"대학","desc":"트랜스포머의 핵심 연산을 몇 배 빠르고 메모리도 적게 처리하는 GPU 커널.","license":"BSD-3-Clause","stars":24884,"gh_url":"https://github.com/Dao-AILab/flash-attention","pushed":"2026-09-11"},{"name":"Mamba","category":"범용 AI 도구·경량화","group":"도구","org":"Carnegie Mellon University · Princeton University","org_type":"대학","desc":"긴 문장을 선형 시간에 처리하는, 트랜스포머를 대체하려는 신경망 구조.","license":"Apache-2.0","weights":"11.1 GB","bytes":11073453248,"tier":"24GB GPU","params_ko":"28억","hf_downloads":16325,"stars":18824,"gh_url":"https://github.com/state-spaces/mamba","pushed":"2026-07-22","variants":[{"id":"state-spaces/mamba-2.8b-hf","url":"https://huggingface.co/state-spaces/mamba-2.8b-hf","size":"11.1 GB"}]},{"name":"xLSTM","category":"범용 AI 도구·경량화","group":"도구","org":"NXAI · JKU Linz","org_type":"대학+기업","desc":"옛 LSTM을 현대적으로 확장해 만든 언어모델 구조.","license":"Apache-2.0","weights":"27.5 GB","bytes":27461756944,"tier":"80GB GPU 1장","params_ko":"69억","hf_downloads":11241,"stars":2197,"gh_url":"https://github.com/NX-AI/xlstm","pushed":"2026-09-07","variants":[{"id":"NX-AI/xLSTM-7b","url":"https://huggingface.co/NX-AI/xLSTM-7b","size":"27.5 GB"}]},{"name":"OLMo 3","category":"범용 AI 도구·경량화","group":"도구","org":"Allen Institute for AI (Ai2)","org_type":"공공·비영리 연구소","desc":"학습에 쓴 데이터와 중간 저장점까지 전부 공개한 진짜 개방형 LLM.","license":"Apache-2.0","weights":"14.6 GB","bytes":14596063712,"tier":"24GB GPU","params_ko":"73억","variant_range":"14.6 GB ~ 64.5 GB","hf_downloads":324012,"stars":6673,"gh_url":"https://github.com/allenai/OLMo","pushed":"2025-11-24","variants":[{"id":"allenai/Olmo-3-7B-Instruct","url":"https://huggingface.co/allenai/Olmo-3-7B-Instruct","size":"14.6 GB"},{"id":"allenai/Olmo-3.1-32B-Think","url":"https://huggingface.co/allenai/Olmo-3.1-32B-Think","size":"64.5 GB"},{"id":"allenai/OLMo-2-1124-7B","url":"https://huggingface.co/allenai/OLMo-2-1124-7B","size":"29.2 GB"}]},{"name":"olmOCR","category":"범용 AI 도구·경량화","group":"도구","org":"Allen Institute for AI (Ai2)","org_type":"공공·비영리 연구소","desc":"스캔 문서와 PDF를 표·수식까지 살려 텍스트로 바꿔 준다.","license":"Apache-2.0","weights":"16.6 GB","bytes":16584414416,"tier":"24GB GPU","params_ko":"83억","hf_downloads":197775,"stars":19464,"gh_url":"https://github.com/allenai/olmocr","pushed":"2026-03-25","variants":[{"id":"allenai/olmOCR-2-7B-1025","url":"https://huggingface.co/allenai/olmOCR-2-7B-1025","size":"16.6 GB"},{"id":"allenai/olmOCR-7B-0725","url":"https://huggingface.co/allenai/olmOCR-7B-0725","size":"16.6 GB"},{"id":"allenai/olmOCR-7B-0225-preview","url":"https://huggingface.co/allenai/olmOCR-7B-0225-preview","size":"16.6 GB"}]},{"name":"Molmo 2","category":"범용 AI 도구·경량화","group":"도구","org":"Allen Institute for AI (Ai2)","org_type":"공공·비영리 연구소","desc":"이미지 속 물체를 손가락으로 짚듯 위치까지 집어 설명하는 모델.","license":"Apache-2.0","weights":"34.6 GB","bytes":34646910272,"tier":"80GB GPU 1장","params_ko":"87억","variant_range":"32.1 GB ~ 34.6 GB","hf_downloads":126856,"stars":933,"gh_url":"https://github.com/allenai/molmo","pushed":"2024-12-12","variants":[{"id":"allenai/Molmo2-8B","url":"https://huggingface.co/allenai/Molmo2-8B","size":"34.6 GB"},{"id":"allenai/Molmo-7B-D-0924","url":"https://huggingface.co/allenai/Molmo-7B-D-0924","size":"32.1 GB"}]},{"name":"MiniCPM-V 4.6","category":"범용 AI 도구·경량화","group":"도구","org":"Tsinghua University · ModelBest (OpenBMB)","org_type":"대학+기업","desc":"휴대폰에서 돌아가는 이미지·영상 이해 모델.","license":"Apache-2.0","weights":"2.6 GB","bytes":2600957528,"tier":"8GB GPU","params_ko":"13억","variant_range":"2.6 GB ~ 17.4 GB","hf_downloads":741372,"stars":26350,"gh_url":"https://github.com/OpenBMB/MiniCPM-V","pushed":"2026-09-08","variants":[{"id":"openbmb/MiniCPM-V-4.6","url":"https://huggingface.co/openbmb/MiniCPM-V-4.6","size":"2.6 GB"},{"id":"openbmb/MiniCPM-V-4_5","url":"https://huggingface.co/openbmb/MiniCPM-V-4_5","size":"17.4 GB"}]},{"name":"GLM-5.3","category":"범용 AI 도구·경량화","group":"도구","org":"Tsinghua University · Z.ai (Zhipu)","org_type":"대학+기업","desc":"추론·코딩·에이전트 작업을 노리는 초대형 오픈 LLM 계열. Flash판은 MIT로 더 느슨하다.","license":"Apache-2.0","weights":"328 GB","bytes":328337455672,"tier":"GPU 여러 장","params_ko":"3,213억","variant_range":"221 GB ~ 756 GB","hf_downloads":1682885,"stars":4423,"gh_url":"https://github.com/zai-org/GLM-4.5","pushed":"2026-02-01","variants":[{"id":"zai-org/GLM-5.3-Flash","url":"https://huggingface.co/zai-org/GLM-5.3-Flash","size":"328 GB"},{"id":"zai-org/GLM-5.3","url":"https://huggingface.co/zai-org/GLM-5.3","size":"756 GB"},{"id":"zai-org/GLM-4.5-Air","url":"https://huggingface.co/zai-org/GLM-4.5-Air","size":"221 GB"}]},{"name":"CogVideoX","category":"범용 AI 도구·경량화","group":"도구","org":"Tsinghua University · Z.ai (Zhipu)","org_type":"대학+기업","desc":"문장만으로 몇 초짜리 영상을 만드는 오픈 생성 모델.","license":"Apache-2.0","weights":"31.1 GB","bytes":31053127324,"tier":"80GB GPU 1장","params_ko":"56억","hf_downloads":5930,"stars":13009,"gh_url":"https://github.com/zai-org/CogVideo","pushed":"2025-11-04","variants":[{"id":"zai-org/CogVideoX1.5-5B","url":"https://huggingface.co/zai-org/CogVideoX1.5-5B","size":"31.1 GB"},{"id":"zai-org/CogVideoX1.5-5B","url":"https://huggingface.co/zai-org/CogVideoX1.5-5B","size":"31.1 GB"}]},{"name":"Gorilla / BFCL","category":"범용 AI 도구·경량화","group":"도구","org":"UC Berkeley","org_type":"대학","desc":"LLM이 API와 도구를 정확히 호출하게 하는 모델과, 그 능력을 재는 평가 기준.","license":"Apache-2.0","stars":13020,"gh_url":"https://github.com/ShishirPatil/gorilla","pushed":"2026-04-13"},{"name":"Sky-T1","category":"범용 AI 도구·경량화","group":"도구","org":"UC Berkeley NovaSky","org_type":"대학","desc":"적은 비용으로 만든 추론 모델과 그 학습 레시피 전부.","license":"Apache-2.0","weights":"65.5 GB","bytes":65527840896,"tier":"80GB GPU 1장","params_ko":"328억","hf_downloads":146,"stars":3400,"gh_url":"https://github.com/NovaSky-AI/SkyThought","pushed":"2025-07-12","variants":[{"id":"NovaSky-AI/Sky-T1-32B-Preview","url":"https://huggingface.co/NovaSky-AI/Sky-T1-32B-Preview","size":"65.5 GB"}]},{"name":"FastChat (Chatbot Arena)","category":"범용 AI 도구·경량화","group":"도구","org":"LMSYS (UC Berkeley 등)","org_type":"대학","desc":"오픈 LLM을 학습·서빙·평가하는 도구. 챗봇 아레나가 여기서 나왔다.","license":"Apache-2.0","stars":39525,"gh_url":"https://github.com/lm-sys/FastChat","pushed":"2026-05-01"},{"name":"Kairos (Kairos-10M/23M/50M)","category":"시계열·표 데이터 예측","group":"예측","org":"ShanghaiTech University (School of Information Science and Technology) · Ant Group","org_type":"대학+기업","desc":"측정 간격이 들쭉날쭉한 데이터도 그대로 받아 예측하는 소형 범용기.","license":"Apache-2.0","weights":"40 MB","bytes":39806164,"tier":"노트북 CPU","params_ko":"995만","variant_range":"40 MB ~ 201 MB","hf_downloads":7664,"stars":31,"gh_url":"https://github.com/foundation-model-research/Kairos","pushed":"2026-06-15","variants":[{"id":"mldi-lab/Kairos_10m","url":"https://huggingface.co/mldi-lab/Kairos_10m","size":"40 MB"},{"id":"mldi-lab/Kairos_23m","url":"https://huggingface.co/mldi-lab/Kairos_23m","size":"92 MB"},{"id":"mldi-lab/Kairos_50m","url":"https://huggingface.co/mldi-lab/Kairos_50m","size":"201 MB"}],"note":"Apache-2.0"},{"name":"TempoPFN","category":"시계열·표 데이터 예측","group":"예측","org":"University of Freiburg · ELLIS Institute Tübingen · Prior Labs","org_type":"대학+기업","desc":"실제 데이터 없이 합성 데이터만으로 학습한 단변량 예측기.","license":"Apache-2.0","weights":"499 MB","bytes":498752361,"tier":"노트북 CPU","hf_downloads":151,"stars":49,"gh_url":"https://github.com/automl/TempoPFN","pushed":"2025-11-10","variants":[{"id":"AutoML-org/TempoPFN","url":"https://huggingface.co/AutoML-org/TempoPFN","size":"499 MB"}],"note":"Apache-2.0 (상업 이용 가능)"},{"name":"OpenCity (OpenCity-Plus)","category":"시계열·표 데이터 예측","group":"예측","org":"University of Hong Kong (Data Intelligence Lab) · South China University of Technology · Baidu Inc.","org_type":"대학+기업","desc":"학습한 적 없는 도시의 도로 상황도 바로 예측하는 시공간 교통 모델.","license":"MIT","weights":"104 MB","bytes":104163305,"tier":"노트북 CPU","stars":181,"gh_url":"https://github.com/HKUDS/OpenCity","pushed":"2026-04-03","variants":[{"id":"hkuds/OpenCity-Plus","url":"https://huggingface.co/hkuds/OpenCity-Plus","size":"104 MB"}],"note":"MIT (GitHub 저장소 기준)"},{"name":"FinCast","category":"금융·경제 예측","group":"예측","org":"The University of Sydney (School of Computer Science)","org_type":"대학","desc":"시장과 시간 단위를 가리지 않고 금융 시계열을 값과 확률 범위로 답하는 모델.","license":"Apache-2.0","weights":"4.0 GB","bytes":3966703063,"tier":"8GB GPU","params_ko":"10억","stars":131,"gh_url":"https://github.com/vincent05r/FinCast-fts","pushed":"2026-06-22","variants":[{"id":"Vincent05R/FinCast","url":"https://huggingface.co/Vincent05R/FinCast","size":"4.0 GB"}],"note":"Apache-2.0"},{"name":"OlmoEarth v1 (Nano/Tiny/Base/Large)","category":"날씨·기후·환경","group":"예측","org":"Allen Institute for AI (Ai2)","org_type":"공공·비영리 연구소","desc":"위성영상 시계열을 여러 원격탐사 과제에 맞춰 미세조정해 쓰는 지구관측 모델.","weights":"830 MB","bytes":830040971,"tier":"노트북 CPU","variant_range":"14 MB ~ 2.7 GB","hf_downloads":63804,"stars":306,"gh_url":"https://github.com/allenai/olmoearth_pretrain","pushed":"2026-09-09","variants":[{"id":"allenai/OlmoEarth-v1-Base","url":"https://huggingface.co/allenai/OlmoEarth-v1-Base","size":"830 MB"},{"id":"allenai/OlmoEarth-v1-Nano","url":"https://huggingface.co/allenai/OlmoEarth-v1-Nano","size":"14 MB"},{"id":"allenai/OlmoEarth-v1-Tiny","url":"https://huggingface.co/allenai/OlmoEarth-v1-Tiny","size":"57 MB"},{"id":"allenai/OlmoEarth-v1-Large","url":"https://huggingface.co/allenai/OlmoEarth-v1-Large","size":"2.7 GB"}],"noncommercial":true,"note":"OlmoEarth Artifact License: 군사·국방, 정보 수집, 인간 감시·치안 용도 사용을 금지하는 조항이 있습니다."},{"name":"SamudrACE (SamudrACE-CM4-piControl)","category":"날씨·기후·환경","group":"예측","org":"Allen Institute for AI (Ai2) · NOAA Geophysical Fluid Dynamics Laboratory · New York University · Princeton University · Lamont-Doherty Earth Observatory of Columbia University","org_type":"공공·비영리 연구소","desc":"바다와 대기를 묶어 장기 기후를 빠르게 재현한다.","license":"Apache-2.0","weights":"2.4 GB","bytes":2364444043,"tier":"8GB GPU","hf_downloads":22,"stars":241,"gh_url":"https://github.com/ai2cm/ace","pushed":"2026-09-11","variants":[{"id":"allenai/SamudrACE-CM4-piControl","url":"https://huggingface.co/allenai/SamudrACE-CM4-piControl","size":"2.4 GB"}],"note":"Apache-2.0 (Ai2 책임 있는 사용 지침 적용)"},{"name":"GLONET","category":"날씨·기후·환경","group":"예측","org":"Mercator Ocean International","org_type":"공공·비영리 연구소","desc":"전 지구 바다의 수온·염분·해수면·해류를 10일 앞까지 매일 예측한다.","weights":"528 MB","bytes":527778599,"tier":"노트북 CPU","variants":[{"id":"mercator-ocean/GLONET","url":"https://huggingface.co/mercator-ocean/GLONET","size":"528 MB"}],"note":"코드 EUPL-1.2, 가중치 CC BY 4.0"},{"name":"SeisBench (사전학습 지진파 모델 모음)","category":"날씨·기후·환경","group":"예측","org":"GFZ German Research Centre for Geosciences (GFZ Potsdam) · Karlsruhe Institute of Technology (KIT)","org_type":"공공·비영리 연구소","desc":"지진계 파형에서 지진을 찾아내고 P파·S파 도달 시각을 읽는 도구.","license":"GPL-3.0","stars":415,"gh_url":"https://github.com/seisbench/seisbench","pushed":"2026-08-19","note":"GPL-3.0"},{"name":"SleepFM (sleepfm-clinical)","category":"건강·의료 예측","group":"예측","org":"Stanford University (James Zou group)","org_type":"대학","desc":"하룻밤 수면검사 기록으로 130개 질환의 향후 발병 위험을 읽는다.","weights":"36 MB","bytes":35800000,"tier":"노트북 CPU","stars":725,"gh_url":"https://github.com/zou-group/sleepfm-clinical","pushed":"2026-03-07","noncommercial":true,"note":"CC BY-NC 4.0 (비상업)"},{"name":"CAPE","category":"건강·의료 예측","group":"예측","org":"Emory University","org_type":"대학","desc":"감염병 구획모형으로 미리 학습해, 처음 보는 유행병의 추이도 바로 예측한다.","stars":4,"gh_url":"https://github.com/Emory-Melody/CAPE","pushed":"2026-02-24","note":"저장소에 라이선스가 지정되어 있지 않고, 체크포인트는 Google Drive로 배포합니다."},{"name":"YuLan-OneSim","category":"인간 행동·사회 시뮬레이션","group":"세계·로봇","org":"Renmin University of China (Gaoling School of Artificial Intelligence)","org_type":"대학","desc":"시나리오를 말로 설명하면 코드를 만들어 최대 10만 명 규모 사회를 시뮬레이션한다.","license":"Apache-2.0","stars":243,"gh_url":"https://github.com/RUC-GSAI/YuLan-OneSim","pushed":"2026-02-02","note":"Apache-2.0"},{"name":"AgentTorch (Large Population Models)","category":"인간 행동·사회 시뮬레이션","group":"세계·로봇","org":"MIT Media Lab","org_type":"대학","desc":"수백만 명 규모 인구를 GPU로 돌려 방역·백신 배분·공급망 정책을 실험한다.","stars":647,"gh_url":"https://github.com/AgentTorch/AgentTorch","pushed":"2026-08-01","noncommercial":true,"note":"AGPL-3.0 (상업 이용은 별도 라이선스 문의)"},{"name":"EfficientViT (EfficientViT-SAM·DC-AE)","category":"범용 AI 도구·경량화","group":"도구","org":"MIT Han Lab","org_type":"대학","desc":"물체 분할과 고해상도 생성을 가볍고 빠르게 돌리는 경량 비전 모음.","license":"Apache-2.0","weights":"814 MB","bytes":814023690,"tier":"노트북 CPU","variant_range":"814 MB ~ 1.3 GB","hf_downloads":339,"stars":3359,"gh_url":"https://github.com/mit-han-lab/efficientvit","pushed":"2025-09-05","variants":[{"id":"mit-han-lab/efficientvit-sam","url":"https://huggingface.co/mit-han-lab/efficientvit-sam","size":"814 MB"},{"id":"mit-han-lab/dc-ae-f32c32-in-1.0","url":"https://huggingface.co/mit-han-lab/dc-ae-f32c32-in-1.0","size":"1.3 GB"}],"note":"Apache-2.0입니다. 2025-09부터 이 저장소는 유지보수를 멈췄고 후속 작업은 dc-ai-projects/DC-Gen에서 진행된다고 README에 적혀 있습니다."},{"name":"StreamingVLM","category":"범용 AI 도구·경량화","group":"도구","org":"MIT Han Lab","org_type":"대학","desc":"끊기지 않고 들어오는 실시간 영상을 지연 없이 따라가며 설명한다.","license":"MIT","weights":"16.6 GB","bytes":16584414544,"tier":"24GB GPU","params_ko":"83억","hf_downloads":31990,"stars":1078,"gh_url":"https://github.com/mit-han-lab/streaming-vlm","pushed":"2025-10-15","variants":[{"id":"mit-han-lab/StreamingVLM","url":"https://huggingface.co/mit-han-lab/StreamingVLM","size":"16.6 GB"}],"note":"코드는 MIT 라이선스이고, HF 모델 카드에는 라이선스가 표기되어 있지 않습니다."},{"name":"Recursive Language Models (RLM)","category":"범용 AI 도구·경량화","group":"도구","org":"MIT CSAIL OASYS Lab","org_type":"대학","desc":"모델이 자기 자신을 다시 불러 아주 긴 입력을 나눠 읽게 하는 방식.","license":"MIT","weights":"16.4 GB","bytes":16381516824,"tier":"24GB GPU","params_ko":"82억","hf_downloads":773,"stars":5608,"gh_url":"https://github.com/alexzhang13/rlm","pushed":"2026-08-26","variants":[{"id":"mit-oasys/rlm-qwen3-8b-v0.1","url":"https://huggingface.co/mit-oasys/rlm-qwen3-8b-v0.1","size":"16.4 GB"}],"note":"코드와 HF 가중치 모두 MIT 라이선스입니다."},{"name":"LongLive","category":"월드 모델·영상 예측","group":"세계·로봇","org":"NVIDIA·MIT·HKUST(GZ)·HKU·청화대 공동","org_type":"대학+기업","desc":"도중에 바뀌는 지시를 반영하면서 긴 영상을 실시간으로 이어 만든다.","license":"Apache-2.0","weights":"5.7 GB","bytes":5676334208,"tier":"8GB GPU","params_ko":"13억","variant_range":"5.7 GB ~ 10.0 GB","stars":2616,"gh_url":"https://github.com/NVlabs/LongLive","pushed":"2026-09-07","variants":[{"id":"Efficient-Large-Model/LongLive-1.3B","url":"https://huggingface.co/Efficient-Large-Model/LongLive-1.3B","size":"5.7 GB"},{"id":"Efficient-Large-Model/LongLive-2.0-5B","url":"https://huggingface.co/Efficient-Large-Model/LongLive-2.0-5B","size":"10.0 GB"}],"noncommercial":true,"note":"코드는 Apache-2.0이지만 LongLive-1.3B 가중치는 CC-BY-NC-SA-4.0(비상업)이고, 2.0 가중치는 별도 라이선스(other)로 표기되어 있습니다."},{"name":"DFoT (Diffusion Forcing Transformer)","category":"월드 모델·영상 예측","group":"세계·로봇","org":"MIT (CMU·Harvard 공동)","org_type":"대학","desc":"앞선 장면 기록을 조건으로 긴 영상을 흔들림 없이 이어 그린다.","weights":"1.8 GB","bytes":1835500000,"tier":"8GB GPU","hf_downloads":1053,"stars":709,"gh_url":"https://github.com/kwsong0113/diffusion-forcing-transformer","pushed":"2025-07-01","variants":[{"id":"kiwhansong/DFoT","url":"https://huggingface.co/kiwhansong/DFoT","size":"10.8 GB"}],"note":"pretrained_models/DFoT_RE10K.ckpt 기준(Kinetics-600판 2.7 GB). 저장소에는 학습용 데이터셋(수십 GB)과 전체 학습 상태 체크포인트도 함께 들어 있다."},{"name":"HPT (Heterogeneous Pre-trained Transformers)","category":"로봇 AI","group":"세계·로봇","org":"MIT CSAIL·Meta FAIR","org_type":"대학+기업","desc":"서로 다른 로봇의 센서 데이터를 한데 모아 미리 학습시켜 새 로봇 적응을 돕는다.","license":"MIT","weights":"51 MB","bytes":50600888,"tier":"노트북 CPU","params_ko":"1,264만","variant_range":"51 MB ~ 1.7 GB","hf_downloads":68,"stars":547,"gh_url":"https://github.com/liruiw/HPT","pushed":"2024-12-06","variants":[{"id":"liruiw/hpt-base","url":"https://huggingface.co/liruiw/hpt-base","size":"51 MB"},{"id":"liruiw/hpt-xlarge","url":"https://huggingface.co/liruiw/hpt-xlarge","size":"1.7 GB"}],"note":"MIT"},{"name":"Neural Jacobian Fields (NJF)","category":"로봇 AI","group":"세계·로봇","org":"MIT CSAIL","org_type":"대학","desc":"카메라만 보고 자기 몸이 어떻게 움직이는지 배워 별도 센서 없이 제어한다. Nature 2025.","stars":236,"gh_url":"https://github.com/sizhe-li/neural-jacobian-field","pushed":"2026-07-21","note":"저장소 라이선스가 자동 판별되지 않으므로(NOASSERTION) 사용 전 확인이 필요합니다. 체크포인트는 Google Drive로 배포됩니다."},{"name":"LucidSim","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"MIT CSAIL","org_type":"대학","desc":"생성형 AI로 만든 가상 장면에서 네 발 로봇의 시각 정책을 훈련해 실물로 옮긴다.","license":"MIT","weights":"36 MB","bytes":35700000,"tier":"노트북 CPU","stars":162,"gh_url":"https://github.com/lucidsim/lucidsim","pushed":"2024-11-15","note":"MIT"},{"name":"FlowER","category":"화학·신소재","group":"과학","org":"MIT Connor Coley 연구실","org_type":"대학","desc":"전자가 어떻게 옮겨 가는지 따라가며 화학 반응의 생성물과 경로를 예측한다. Nature 2025.","license":"MIT","weights":"179 MB","bytes":179000000,"tier":"노트북 CPU","stars":153,"gh_url":"https://github.com/FongMunHong/FlowER","pushed":"2026-05-29","note":"MIT"},{"name":"Apertus","category":"범용 AI 도구·경량화","group":"도구","org":"Swiss AI Initiative (EPFL·ETH Zurich·CSCS)","org_type":"대학","desc":"스위스가 여러 언어로 학습하고 가중치·데이터·절차를 모두 공개한 LLM.","weights":"17.2 GB","bytes":17218224192,"tier":"24GB GPU","params_ko":"89억","variant_range":"16.1 GB ~ 143 GB","hf_downloads":45157,"stars":140,"gh_url":"https://github.com/swiss-ai/apertus-tech-report","pushed":"2026-03-09","variants":[{"id":"swiss-ai/Apertus-v1.5-8B","url":"https://huggingface.co/swiss-ai/Apertus-v1.5-8B","size":"17.2 GB"},{"id":"swiss-ai/Apertus-v1.5-70B","url":"https://huggingface.co/swiss-ai/Apertus-v1.5-70B","size":"143 GB"},{"id":"swiss-ai/Apertus-8B-2509","url":"https://huggingface.co/swiss-ai/Apertus-8B-2509","size":"16.1 GB"}],"gated":true,"note":"Apache-2.0"},{"name":"K2 Think","category":"범용 AI 도구·경량화","group":"도구","org":"MBZUAI Institute of Foundation Models (IFM, 옛 LLM360)","org_type":"대학","desc":"수학·코딩 문제를 단계별로 풀도록 훈련한 공개 추론형 LLM.","license":"Apache-2.0","weights":"65.5 GB","bytes":65527841688,"tier":"80GB GPU 1장","params_ko":"328억","variant_range":"65.5 GB ~ 290 GB","hf_downloads":723,"stars":131,"gh_url":"https://github.com/MBZUAI-IFM/K2-Think-SFT","pushed":"2025-09-09","variants":[{"id":"IFM/K2-Think","url":"https://huggingface.co/IFM/K2-Think","size":"65.5 GB"},{"id":"IFM/K2-Think-V2","url":"https://huggingface.co/IFM/K2-Think-V2","size":"290 GB"}],"note":"Apache-2.0입니다. 옛 ID LLM360/K2-Think는 IFM/K2-Think로 넘어갑니다."},{"name":"ether0","category":"화학·신소재","group":"과학","org":"FutureHouse","org_type":"공공·비영리 연구소","desc":"화학 문제를 단계적으로 풀고 조건에 맞는 분자식을 답으로 내놓는 화학 특화 추론 모델.","license":"Apache-2.0","weights":"94.3 GB","bytes":94292276584,"tier":"GPU 여러 장","params_ko":"236억","hf_downloads":601,"stars":167,"gh_url":"https://github.com/Future-House/ether0","pushed":"2025-10-26","variants":[{"id":"futurehouse/ether0","url":"https://huggingface.co/futurehouse/ether0","size":"94.3 GB"}],"note":"Apache-2.0"},{"name":"SevenNet (SevenNet-Omni·Nano)","category":"화학·신소재","group":"과학","org":"서울대학교 MDIL(재료데이터·정보학 연구실)","org_type":"대학","desc":"서울대가 만든 원자 퍼텐셜. 분자동역학을 양자계산보다 훨씬 빠르게 돌린다.","license":"MIT","weights":"103 MB","bytes":103000000,"tier":"노트북 CPU","stars":273,"gh_url":"https://github.com/MDIL-SNU/SevenNet","pushed":"2026-07-22","note":"MIT"},{"name":"UPET (PET-MAD 계열)","category":"화학·신소재","group":"과학","org":"EPFL COSMO 연구실","org_type":"대학","desc":"소재·표면·분자 시뮬레이션에 쓰는 범용 원자간 퍼텐셜 모음. 크기별로 골라 쓴다.","license":"BSD-3-Clause","weights":"2.9 GB","bytes":2920690613,"tier":"8GB GPU","stars":232,"gh_url":"https://github.com/lab-cosmo/upet","pushed":"2026-09-10","variants":[{"id":"lab-cosmo/upet","url":"https://huggingface.co/lab-cosmo/upet","size":"2.9 GB"}],"note":"BSD-3-Clause"},{"name":"Ctrl-World","category":"월드 모델·영상 예측","group":"세계·로봇","org":"Stanford University, Tsinghua University","org_type":"대학","desc":"로봇 명령을 받아 여러 시점의 미래 영상을 만들어, 실물 로봇 없이 정책을 평가한다.","license":"MIT","weights":"9.3 GB","bytes":9281040326,"tier":"24GB GPU","hf_downloads":147,"stars":564,"gh_url":"https://github.com/Robert-gyj/Ctrl-World","pushed":"2026-04-08","variants":[{"id":"yjguo/Ctrl-World","url":"https://huggingface.co/yjguo/Ctrl-World","size":"9.3 GB"}],"note":"코드와 HF 가중치 모두 MIT이다."},{"name":"Yume / Yume1.5","category":"월드 모델·영상 예측","group":"세계·로봇","org":"Shanghai AI Laboratory, Fudan University, Shanghai Innovation Institute","org_type":"공공·비영리 연구소","desc":"이미지나 글에서 출발해 이동 조작으로 탐험할 수 있는 영상 세계를 이어 만든다.","license":"Apache-2.0","weights":"20.8 GB","bytes":20801593664,"tier":"80GB GPU 1장","params_ko":"52억","variant_range":"20.8 GB ~ 68.3 GB","hf_downloads":242,"stars":685,"gh_url":"https://github.com/stdstu12/YUME","pushed":"2026-01-14","variants":[{"id":"stdstu123/Yume-5B-720P","url":"https://huggingface.co/stdstu123/Yume-5B-720P","size":"20.8 GB"},{"id":"stdstu123/Yume-I2V-540P","url":"https://huggingface.co/stdstu123/Yume-I2V-540P","size":"68.3 GB"}],"note":"코드와 HF 가중치 모두 Apache-2.0이다."},{"name":"Epona","category":"월드 모델·영상 예측","group":"세계·로봇","org":"Horizon Robotics, Tsinghua University, Peking University, The Hong Kong University of Science and Technology, Nanyang Technological University, Nanjing University, Tencent Hunyuan","org_type":"대학+기업","desc":"주행 카메라 영상으로 앞으로 펼쳐질 장면과 차량 궤적을 함께 예측한다.","license":"MIT","weights":"5.2 GB","bytes":5183675562,"tier":"8GB GPU","params_ko":"25억","stars":388,"gh_url":"https://github.com/Kevin-thu/Epona","pushed":"2025-07-22","variants":[{"id":"Kevin-thu/Epona","url":"https://huggingface.co/Kevin-thu/Epona","size":"5.2 GB"}],"note":"코드와 HF 가중치 모두 MIT이다."},{"name":"Olaf-World","category":"월드 모델·영상 예측","group":"세계·로봇","org":"Show Lab, National University of Singapore; CFAR & IHPC, A*STAR","org_type":"대학","desc":"행동 표시가 없는 영상에서 조작을 배워, 한 영상의 움직임을 다른 장면에 옮겨 적용한다.","license":"MIT","weights":"15.6 GB","bytes":15645917769,"tier":"24GB GPU","stars":121,"gh_url":"https://github.com/showlab/Olaf-World","pushed":"2026-04-20","variants":[{"id":"YuxinJ/Olaf-World","url":"https://huggingface.co/YuxinJ/Olaf-World","size":"15.6 GB"}],"note":"코드는 MIT, HF 가중치는 Apache-2.0이다."},{"name":"X-VLA","category":"로봇 AI","group":"세계·로봇","org":"Institute for AI Industry Research (AIR), Tsinghua University; Peking University","org_type":"대학","desc":"로봇마다 작은 프롬프트만 갈아 끼워 여러 기종에 적응하는 조작 모델.","license":"Apache-2.0","weights":"3.5 GB","bytes":3519068172,"tier":"8GB GPU","params_ko":"8.8억","hf_downloads":8146,"stars":728,"gh_url":"https://github.com/2toinf/X-VLA","pushed":"2026-06-10","variants":[{"id":"2toINF/X-VLA-Pt","url":"https://huggingface.co/2toINF/X-VLA-Pt","size":"3.5 GB"}],"note":"코드와 HF 가중치 모두 Apache-2.0이다."},{"name":"MolmoAct2","category":"로봇 AI","group":"세계·로봇","org":"Allen Institute for AI (Ai2), University of Washington","org_type":"공공·비영리 연구소","desc":"공간을 먼저 추론한 다음 이어지는 로봇 동작을 내놓는 행동 추론 모델.","license":"Apache-2.0","weights":"21.8 GB","bytes":21768955912,"tier":"80GB GPU 1장","params_ko":"54억","variant_range":"21.8 GB ~ 32.5 GB","hf_downloads":8916,"stars":749,"gh_url":"https://github.com/allenai/molmoact2","pushed":"2026-08-23","variants":[{"id":"allenai/MolmoAct2","url":"https://huggingface.co/allenai/MolmoAct2","size":"21.8 GB"},{"id":"allenai/MolmoAct-7B-D-0812","url":"https://huggingface.co/allenai/MolmoAct-7B-D-0812","size":"32.5 GB"}],"note":"코드는 Apache-2.0이고, HF 모델 카드에는 라이선스 표기가 없다."},{"name":"InternVLA-M1","category":"로봇 AI","group":"세계·로봇","org":"Intern Robotics, Shanghai AI Laboratory","org_type":"공공·비영리 연구소","desc":"지시에 나온 물체 위치를 먼저 짚은 뒤 동작을 만드는 범용 로봇 정책.","license":"MIT","weights":"7.5 GB","bytes":7509337944,"tier":"24GB GPU","params_ko":"38억","hf_downloads":252,"stars":429,"gh_url":"https://github.com/InternRobotics/InternVLA-M1","pushed":"2026-02-11","variants":[{"id":"InternRobotics/InternVLA-M1","url":"https://huggingface.co/InternRobotics/InternVLA-M1","size":"7.5 GB"}],"noncommercial":true,"note":"코드는 MIT이지만 HF 가중치는 CC BY-NC-SA 4.0이라 비상업 용도로만 쓸 수 있다."},{"name":"BEHAVIOR-1K","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Stanford Vision and Learning Lab (StanfordVL), Stanford University","org_type":"대학","desc":"집안일 1,000가지를 시뮬레이터에서 재현한 가사 로봇 시험장.","stars":1690,"gh_url":"https://github.com/StanfordVL/BEHAVIOR-1K","pushed":"2026-09-11","note":"GitHub가 저장소 라이선스를 감지하지 못했으므로 사용 전에 확인해야 한다."},{"name":"Terminal-Bench 2.0","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Stanford University, Laude Institute","org_type":"대학","desc":"에이전트가 터미널 과제 89개를 끝까지 해내는지 도커 환경에서 채점한다.","license":"Apache-2.0","stars":405,"gh_url":"https://github.com/harbor-framework/terminal-bench-2","pushed":"2026-04-30","note":"Apache-2.0이다."},{"name":"GPUDrive","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Emerge Lab, NYU Tandon School of Engineering; Stanford University","org_type":"대학","desc":"실제 주행 기록으로 만든 교통 장면을 GPU에서 초고속으로 돌려 자율주행을 훈련시킨다.","license":"MIT","weights":"207 KB","bytes":206856,"tier":"노트북 CPU","params_ko":"5만","hf_downloads":91,"stars":616,"gh_url":"https://github.com/Emerge-Lab/gpudrive","pushed":"2025-12-01","variants":[{"id":"daphne-cornelisse/policy_S10_000_02_27","url":"https://huggingface.co/daphne-cornelisse/policy_S10_000_02_27","size":"207 KB"}],"note":"MIT이다."},{"name":"Aerial Gym Simulator","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"Autonomous Robots Lab, Norwegian University of Science and Technology (NTNU)","org_type":"대학","desc":"드론 여러 대를 GPU 병렬로 띄워 비행 제어와 회피를 훈련시킨다.","license":"BSD-3-Clause","stars":764,"gh_url":"https://github.com/ntnu-arl/aerial_gym_simulator","pushed":"2026-06-28","note":"BSD-3-Clause이다."},{"name":"Eclipse SUMO","category":"AI 훈련 환경·시뮬레이터","group":"세계·로봇","org":"German Aerospace Center (DLR), Institute of Transportation Systems","org_type":"공공·비영리 연구소","desc":"도시 교통 흐름을 차량 하나 단위로 시뮬레이션한다. 신호 제어 AI 검증용.","license":"EPL-2.0","stars":4173,"gh_url":"https://github.com/eclipse-sumo/sumo","pushed":"2026-09-09","note":"EPL-2.0이다."}]}</script>
+<script>
+(function(){
+"use strict";
+var D = JSON.parse(document.getElementById('atlas-data').textContent);
+var ITEMS = D.items, MEASURED = D.measured;
+var GROUPS = [
+  {key:'예측',      css:'var(--pred)'},
+  {key:'과학',      css:'var(--sci)'},
+  {key:'세계·로봇', css:'var(--world)'},
+  {key:'도구',      css:'var(--tool)'}
+];
+var TIERS = ['노트북 CPU','8GB GPU','24GB GPU','80GB GPU 1장','GPU 여러 장','코드·프레임워크'];
+var $ = function(s){return document.querySelector(s)};
+
+/* ── 상태 ── */
+var state = {q:'', groups:new Set(GROUPS.map(function(g){return g.key})), tier:'', lic:'', sort:'pop'};
+
+/* ── 헤더 통계 ── */
+$('#measured').textContent = MEASURED;
+$('#measured2').textContent = MEASURED;
+$('#n-total').textContent = ITEMS.length;
+(function(){
+  var by = {};
+  ITEMS.forEach(function(i){ by[i.org_type] = (by[i.org_type]||0)+1 });
+  var withW = ITEMS.filter(function(i){return i.bytes}).length;
+  var rows = Object.keys(by).sort(function(a,b){return by[b]-by[a]})
+    .map(function(k){return [k, by[k]+'종']});
+  rows.push(['모델 파일 용량 확인', withW+'종']);
+  $('#stats').innerHTML = rows.map(function(r){
+    return '<tr><td>'+esc(r[0])+'</td><td>'+esc(r[1])+'</td></tr>' }).join('');
+})();
+
+/* ── 범례 + 분야 칩 ── */
+(function(){
+  var counts = {};
+  ITEMS.forEach(function(i){ counts[i.group] = (counts[i.group]||0)+1 });
+  $('#legend').innerHTML = GROUPS.map(function(g){
+    var n = ITEMS.filter(function(i){return i.group===g.key && i.bytes}).length;
+    return '<span><i class="dot" style="background:'+g.css+'"></i>'+esc(g.key)+' '+n+'</span>';
+  }).join('');
+  $('#groups').innerHTML = GROUPS.map(function(g){
+    return '<button class="chip" data-g="'+esc(g.key)+'" aria-pressed="true">'
+      + '<i class="dot" style="background:'+g.css+'"></i>'+esc(g.key)+' '+counts[g.key]+'</button>';
+  }).join(' ');
+  $('#groups').addEventListener('click', function(e){
+    var b = e.target.closest('[data-g]'); if(!b) return;
+    var k = b.getAttribute('data-g'), on = b.getAttribute('aria-pressed')==='true';
+    if(on) state.groups.delete(k); else state.groups.add(k);
+    b.setAttribute('aria-pressed', String(!on));
+    render();
+  });
+})();
+
+/* ── 셀렉트 ── */
+function fill(sel, opts){
+  $(sel).innerHTML = opts.map(function(o){
+    return '<option value="'+esc(o[0])+'">'+esc(o[1])+'</option>' }).join('');
+}
+fill('#f-tier', [['','전체']].concat(TIERS.map(function(t){
+  var n = ITEMS.filter(function(i){return tierOf(i)===t}).length;
+  return [t, t+' ('+n+')'];
+})));
+fill('#f-lic', [['','전체'],
+  ['free','자유 (MIT·Apache·BSD·CC0)'],
+  ['care','주의 (미표기·비상업·카피레프트)'],
+  ['gated','승인 필요 (gated)']]);
+fill('#sort', [['pop','인기순 (HF 내려받기·★)'],['size','용량 큰 순'],['size-asc','용량 작은 순'],['name','이름순']]);
+['#f-tier','#f-lic','#sort'].forEach(function(s){
+  $(s).addEventListener('change', function(){
+    state[s==='#f-tier'?'tier':s==='#f-lic'?'lic':'sort'] = this.value; render();
+  });
+});
+$('#q').addEventListener('input', function(){ state.q = this.value.trim(); render() });
+
+/* ── 테마 ── */
+(function(){
+  var btn = $('#theme');
+  function cur(){
+    var a = document.documentElement.getAttribute('data-theme');
+    if(a) return a;
+    return matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
+  }
+  function sync(){ btn.setAttribute('aria-pressed', String(cur()==='dark')) }
+  sync();
+  btn.addEventListener('click', function(){
+    var next = cur()==='dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('atlas-theme', next) }catch(e){}
+    sync(); drawChart();
+  });
+})();
+
+/* ── 도우미 ── */
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c] }) }
+function tierOf(i){ return i.tier || '코드·프레임워크' }
+function licClass(i){
+  if(i.gated) return 'gated';
+  var l = i.license || '';
+  if(/^(MIT|Apache-2\.0|BSD-3-Clause|CC0-1\.0)$/.test(l)) return 'free';
+  return 'care';
+}
+function groupColor(g){
+  var f = GROUPS.filter(function(x){return x.key===g})[0];
+  return f ? f.css : 'var(--ink-3)';
+}
+function hl(text, q){
+  if(!q) return esc(text);
+  var i = String(text).toLowerCase().indexOf(q.toLowerCase());
+  if(i < 0) return esc(text);
+  return esc(text.slice(0,i)) + '<mark>' + esc(text.slice(i, i+q.length)) + '</mark>' + esc(text.slice(i+q.length));
+}
+function popOf(i){ return (i.hf_downloads||0) * 10 + (i.stars||0) }
+
+/* ── 필터·정렬 ── */
+function visible(){
+  var q = state.q.toLowerCase();
+  var out = ITEMS.filter(function(i){
+    if(!state.groups.has(i.group)) return false;
+    if(state.tier && tierOf(i) !== state.tier) return false;
+    if(state.lic && licClass(i) !== state.lic) return false;
+    if(q){
+      var hay = (i.name+' '+i.org+' '+i.desc+' '+i.category+' '+(i.license||'')).toLowerCase();
+      if(hay.indexOf(q) < 0) return false;
+    }
+    return true;
+  });
+  var s = state.sort;
+  out.sort(function(a,b){
+    if(s==='name') return a.name.localeCompare(b.name,'ko');
+    if(s==='size') return (b.bytes||0)-(a.bytes||0);
+    if(s==='size-asc') return (a.bytes||-1)-(b.bytes||-1);
+    return popOf(b)-popOf(a);
+  });
+  return out;
+}
+
+/* ── 표 ── */
+var BYTES_MAX = Math.max.apply(null, ITEMS.map(function(i){return i.bytes||0}));
+function render(){
+  var rows = visible();
+  $('#count').textContent = rows.length + ' / ' + ITEMS.length + '종';
+  $('#empty').hidden = rows.length > 0;
+  var q = state.q;
+  $('#tbody').innerHTML = rows.map(function(i){
+    var w = i.bytes ? Math.max(2, Math.round(100*Math.log10(i.bytes)/Math.log10(BYTES_MAX))) : 0;
+    var badges = '';
+    if(i.gated) badges += '<span class="badge">승인필요</span>';
+    if(i.noncommercial) badges += '<span class="badge">비상업</span>';
+    if(i.archived) badges += '<span class="badge">보관됨</span>';
+    return '<tr class="row" data-id="'+esc(i.name)+'" tabindex="0" role="button" aria-expanded="false">'
+      + '<td><div class="m-name">'+hl(i.name,q)+badges+'</div>'
+      +     '<div class="m-desc">'+hl(i.desc,q)+'</div>'
+      +     '<div class="m-cat">'+esc(i.category)+'</div></td>'
+      + '<td><div class="m-org">'+hl(i.org,q)+'</div></td>'
+      + '<td><span class="lic">'+esc(i.license||'미표기')+'</span></td>'
+      + '<td class="num">'+esc(i.weights||'—')
+      +     (i.bytes?'<i class="bar" style="width:'+w+'%;background:'+groupColor(i.group)+'"></i>':'')+'</td>'
+      + '<td><span class="lic">'+esc(tierOf(i))+'</span></td>'
+      + '<td class="num">'+esc(popLabel(i))+'</td>'
+      + '</tr>';
+  }).join('');
+}
+function popLabel(i){
+  if(i.hf_downloads) return fmt(i.hf_downloads)+' ↓';
+  if(i.stars) return '★'+fmt(i.stars);
+  return '—';
+}
+function fmt(n){
+  if(n >= 1e8) return (n/1e8).toFixed(1)+'억';
+  if(n >= 1e4) return Math.round(n/1e4)+'만';
+  return n.toLocaleString('ko');
+}
+
+/* ── 행 펼침 ── */
+function toggle(tr){
+  var open = tr.getAttribute('aria-expanded')==='true';
+  var nxt = tr.nextElementSibling;
+  if(open){ if(nxt && nxt.classList.contains('detail')) nxt.remove(); tr.setAttribute('aria-expanded','false'); return; }
+  var name = tr.getAttribute('data-id');
+  var i = ITEMS.filter(function(x){return x.name===name})[0];
+  if(!i) return;
+  var links = [];
+  if(i.gh_url) links.push('<li><a href="'+esc(i.gh_url)+'" target="_blank" rel="noopener">GitHub ↗</a>'
+    + (i.stars?' <span class="kv">★'+fmt(i.stars)+'</span>':'')+'</li>');
+  (i.variants||[]).forEach(function(v){
+    links.push('<li><a href="'+esc(v.url)+'" target="_blank" rel="noopener">'+esc(v.id)+' ↗</a>'
+      + (v.size?' <span class="kv">'+esc(v.size)+'</span>':'')+'</li>');
+  });
+  if(!links.length) links.push('<li class="kv">공개된 내려받기 경로가 정리돼 있지 않다.</li>');
+
+  var facts = [];
+  if(i.params_ko) facts.push('<div class="kv">파라미터 <b>'+esc(i.params_ko)+'</b></div>');
+  if(i.weights) facts.push('<div class="kv">가중치 <b>'+esc(i.weights)+'</b></div>');
+  if(i.variant_range) facts.push('<div class="kv">변형 범위 <b>'+esc(i.variant_range)+'</b></div>');
+  facts.push('<div class="kv">필요 장비 <b>'+esc(tierOf(i))+'</b></div>');
+  facts.push('<div class="kv">분류 <b>'+esc(i.org_type)+'</b></div>');
+  if(i.pushed) facts.push('<div class="kv">최근 갱신 <b>'+esc(i.pushed)+'</b></div>');
+
+  var tr2 = document.createElement('tr');
+  tr2.className = 'detail';
+  tr2.innerHTML = '<td colspan="6"><div class="det">'
+    + '<div><h3>내려받기</h3><ul>'+links.join('')+'</ul></div>'
+    + '<div><h3>수치</h3>'+facts.join('')+'</div>'
+    + (i.note ? '<div><h3>비고</h3><div class="note-box">'+esc(i.note)+'</div></div>' : '')
+    + '</div></td>';
+  tr.parentNode.insertBefore(tr2, tr.nextSibling);
+  tr.setAttribute('aria-expanded','true');
+}
+$('#tbody').addEventListener('click', function(e){
+  if(e.target.closest('a')) return;
+  var tr = e.target.closest('tr.row'); if(tr) toggle(tr);
+});
+$('#tbody').addEventListener('keydown', function(e){
+  if(e.key!=='Enter' && e.key!==' ') return;
+  var tr = e.target.closest('tr.row'); if(!tr) return;
+  e.preventDefault(); toggle(tr);
+});
+
+/* ── 산점도 ── */
+var W = 1100, H = 330, PAD = {t:26, r:20, b:28, l:78};
+function drawChart(){
+  var pts = ITEMS.filter(function(i){return i.bytes});
+  var min = Math.min.apply(null, pts.map(function(i){return i.bytes}));
+  var max = Math.max.apply(null, pts.map(function(i){return i.bytes}));
+  var lo = Math.log10(min), hi = Math.log10(max);
+  var x = function(b){ return PAD.l + (Math.log10(b)-lo)/(hi-lo) * (W-PAD.l-PAD.r) };
+  var rowH = (H-PAD.t-PAD.b)/GROUPS.length;
+  var y = function(gi){ return PAD.t + rowH*gi + rowH/2 };
+  var ticks = [1e6,1e7,1e8,1e9,1e10,1e11,1e12];
+  var lab = {1e6:'1 MB',1e7:'10 MB',1e8:'100 MB',1e9:'1 GB',1e10:'10 GB',1e11:'100 GB',1e12:'1 TB'};
+  var bands = [[8e8,8e9],[2.4e10,8e10]];
+
+  var s = '';
+  bands.forEach(function(b){
+    var x0 = x(Math.max(b[0],min)), x1 = x(Math.min(b[1],max));
+    if(x1>x0) s += '<rect class="band" x="'+x0+'" y="'+PAD.t+'" width="'+(x1-x0)+'" height="'+(H-PAD.t-PAD.b)+'"/>';
+  });
+  ticks.forEach(function(t){
+    if(t<min || t>max) return;
+    s += '<line class="grid" x1="'+x(t)+'" y1="'+PAD.t+'" x2="'+x(t)+'" y2="'+(H-PAD.b)+'"/>'
+      + '<text class="tick" x="'+x(t)+'" y="'+(H-PAD.b+16)+'" text-anchor="middle">'+lab[t]+'</text>';
+  });
+  GROUPS.forEach(function(g,gi){
+    s += '<text class="rowlab" x="'+(PAD.l-12)+'" y="'+(y(gi)+4)+'" text-anchor="end" fill="'+g.css+'">'+esc(g.key)+'</text>';
+  });
+  pts.forEach(function(i){
+    var gi = GROUPS.map(function(g){return g.key}).indexOf(i.group);
+    if(gi<0) return;
+    var jitter = (hash(i.name)%100)/100 - .5;
+    var cy = y(gi) + jitter * (rowH*0.55);
+    s += '<circle cx="'+x(i.bytes).toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="4.5" fill="'+GROUPS[gi].css+'"'
+      + ' data-id="'+esc(i.name)+'"><title>'+esc(i.name+' · '+i.weights)+'</title></circle>';
+  });
+  var svg = $('#sp');
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.innerHTML = s;
+  $('#range-title').textContent = fmtBytes(min)+'에서 '+fmtBytes(max)+'까지';
+}
+function fmtBytes(b){
+  /* 원본 weights 문자열이 1000 기준(SI)이므로 표의 값과 어긋나지 않게 맞춘다 */
+  var u = ['B','KB','MB','GB','TB'], k = 0, v = b;
+  while(v >= 1000 && k < u.length-1){ v/=1000; k++ }
+  return Math.round(v) + ' ' + u[k];
+}
+function hash(s){ var h=0; for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0 } return Math.abs(h) }
+$('#sp').addEventListener('click', function(e){
+  var c = e.target.closest('circle'); if(!c) return;
+  var name = c.getAttribute('data-id');
+  state.q = ''; $('#q').value = '';
+  state.groups = new Set(GROUPS.map(function(g){return g.key}));
+  Array.prototype.forEach.call(document.querySelectorAll('#groups .chip'), function(b){ b.setAttribute('aria-pressed','true') });
+  state.tier = ''; $('#f-tier').value = '';
+  state.lic = ''; $('#f-lic').value = '';
+  render();
+  var tr = document.querySelector('tr.row[data-id="'+name.replace(/"/g,'\\"')+'"]');
+  if(tr){ tr.scrollIntoView({block:'center', behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto':'smooth'});
+    if(tr.getAttribute('aria-expanded')!=='true') toggle(tr); tr.focus(); }
+});
+
+render();
+drawChart();
+})();
+</script>
+</body>
+</html>
