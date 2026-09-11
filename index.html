@@ -331,8 +331,7 @@ function licClass(i){
   if(/^(MIT|Apache-2\.0|BSD-3-Clause|CC0-1\.0)$/.test(l)) return 'free';
   return 'care';
 }
-var GCOLOR = {};
-GROUPS.forEach(function(g){ GCOLOR[g.key] = g.css });
+var GCOLOR = GROUPS.reduce(function(m,g){ m[g.key]=g.css; return m }, {});
 function groupColor(g){ return GCOLOR[g] || 'var(--ink-3)' }
 function hl(text, q){
   if(!q) return esc(text);
@@ -359,9 +358,8 @@ function visible(){
   out.sort(function(a,b){
     if(s==='name') return a.name.localeCompare(b.name,'ko');
     if(s==='size') return (b.bytes||0)-(a.bytes||0);
-    if(s==='size-asc'){ /* 용량 미확인은 항상 뒤로 */
-      if(!a.bytes !== !b.bytes) return a.bytes ? -1 : 1;
-      return (a.bytes||0)-(b.bytes||0); }
+    /* 용량 미확인(undefined)만 Infinity로 밀어 뒤로 보낸다. 0은 유효값으로 취급 */
+    if(s==='size-asc') return ((a.bytes==null?Infinity:a.bytes)-(b.bytes==null?Infinity:b.bytes))||0;
     return popOf(b)-popOf(a);
   });
   return out;

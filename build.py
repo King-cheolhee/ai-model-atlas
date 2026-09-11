@@ -5,6 +5,8 @@
 """
 import json
 import os
+import re
+import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "src", "index.template.html")
@@ -33,12 +35,15 @@ LICENSE_FIX = {
     "TabPFN": "Prior Labs",
 }
 
-# 코드는 자유 라이선스인데 가중치만 비상업이거나, 별도 협의가 필요한 것
+# 코드는 자유 라이선스인데 가중치만 비상업이거나, 별도 협의가 필요한 것.
+# 아래 집합은 현재 데이터에서 확인한 것이고, NC_PAT 는 데이터가 갱신됐을 때
+# 메모에만 적힌 비상업 조건을 놓치지 않기 위한 그물이다(자유로 잘못 표기하면 위험).
 NONCOMMERCIAL = {
     "Pangu-Weather", "SleepFM (sleepfm-clinical)", "OlmoEarth v1 (Nano/Tiny/Base/Large)",
     "InternVLA-M1", "LongLive", "Delphi-2M", "AgentTorch (Large Population Models)",
     "Centaur", "life2vec", "AlphaFold 3",
 }
+NC_PAT = re.compile(r"비상업|BY-NC|NonCommercial|별도 라이선스|승인받아야")
 
 def lean(item, desc):
     gh = item.get("gh") or {}
@@ -67,7 +72,7 @@ def lean(item, desc):
         ],
         "gated": bool(item.get("gated")),
         "archived": bool(gh.get("archived")),
-        "noncommercial": name in NONCOMMERCIAL,
+        "noncommercial": name in NONCOMMERCIAL or bool(note and NC_PAT.search(note)),
         "note": note,
     }
     if out["license"] == "NOASSERTION":
@@ -78,6 +83,9 @@ def lean(item, desc):
 
 
 def main():
+    if len(sys.argv) > 1:
+        print("이 스크립트는 인자를 받지 않는다. 입력은 %s 고정." % ATLAS)
+        return 2
     raw = json.load(open(ATLAS, encoding="utf-8"))
     items = raw["items"]
     desc = {k: v for k, v in json.load(open(DESC, encoding="utf-8")).items()
