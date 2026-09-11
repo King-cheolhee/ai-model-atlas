@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
 """atlas 원본 + 직접 작성한 한국어 설명 -> 배포용 index.html 한 장.
 
-사용법:  python build.py [atlas.json 경로]
-기본 입력 경로는 data/atlas.source.json 이다.
+사용법:  python build.py
 """
 import json
 import os
-import re
-import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, "src", "index.template.html")
 DESC = os.path.join(ROOT, "data", "descriptions.ko.json")
 OUT = os.path.join(ROOT, "index.html")
-DEFAULT_ATLAS = os.path.join(ROOT, "data", "atlas.source.json")
+ATLAS = os.path.join(ROOT, "data", "atlas.source.json")
 
 # 11개 세부 분야를 레퍼런스와 같은 4개 묶음으로
 GROUP = {
@@ -42,8 +39,6 @@ NONCOMMERCIAL = {
     "InternVLA-M1", "LongLive", "Delphi-2M", "AgentTorch (Large Population Models)",
     "Centaur", "life2vec", "AlphaFold 3",
 }
-NC_PAT = re.compile(r"비상업|BY-NC|NonCommercial|별도 라이선스|승인받아야")
-
 
 def lean(item, desc):
     gh = item.get("gh") or {}
@@ -72,17 +67,18 @@ def lean(item, desc):
         ],
         "gated": bool(item.get("gated")),
         "archived": bool(gh.get("archived")),
-        "noncommercial": name in NONCOMMERCIAL or bool(note and NC_PAT.search(note)),
+        "noncommercial": name in NONCOMMERCIAL,
         "note": note,
     }
     if out["license"] == "NOASSERTION":
         out["license"] = None
-    return {k: v for k, v in out.items() if v not in (None, [], False)}
+    # 0 == False 이므로 "not in" 비교는 값이 0인 항목까지 지운다. 타입으로 판별한다.
+    return {k: v for k, v in out.items()
+            if v is not None and v != [] and v is not False}
 
 
 def main():
-    atlas_path = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_ATLAS
-    raw = json.load(open(atlas_path, encoding="utf-8"))
+    raw = json.load(open(ATLAS, encoding="utf-8"))
     items = raw["items"]
     desc = {k: v for k, v in json.load(open(DESC, encoding="utf-8")).items()
             if not k.startswith("_")}
@@ -103,11 +99,24 @@ def main():
         print("분류 매핑 누락 — 빌드 중단:", unknown)
         return 1
 
+    # 페이지가 클릭 가능한 링크로 내보내므로 https 가 아닌 주소는 통과시키지 않는다
+    bad = []
+    for i in items:
+        urls = [(i.get("gh") or {}).get("url")] + [v["url"] for v in (i.get("variants") or [])]
+        bad += [(i["name"], u) for u in urls if u and not u.startswith("https://")]
+    if bad:
+        print("https 가 아닌 링크 — 빌드 중단:")
+        for name, u in bad:
+            print("  %s: %s" % (name, u))
+        return 1
+
     payload = {"measured": raw["measured"],
                "items": [lean(i, desc) for i in items]}
     blob = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-    # </script> 로 스크립트 블록이 조기 종료되는 것을 막는다
-    blob = blob.replace("</", "<\\/")
+    # "<" 를 전부 이스케이프한다. "</script>" 로 블록이 조기 종료되는 것뿐 아니라
+    # "<!--<script" 조합으로 HTML 파서 상태가 바뀌는 경우까지 막는다.
+    # JSON.parse 가 < 를 "<" 로 되돌리므로 화면에 보이는 값은 그대로다.
+    blob = blob.replace("<", "\\u003c")
 
     html = open(SRC, encoding="utf-8").read()
     if "__DATA__" not in html:

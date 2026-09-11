@@ -16,8 +16,8 @@
 
 /* ── 토큰: 라이트가 기본, 다크는 오버라이드만 ── */
 :root{
-  --bg:#F2F4F1; --surface:#FAFBF9; --ink:#17201C; --ink-2:#47524C; --ink-3:#76817B;
-  --line:#D5DCD7; --line-2:#E4E9E5; --hover:#E8EDE9; --mark:#F1E19A; --mark-ink:#17201C;
+  --bg:#F2F4F1; --surface:#FAFBF9; --ink:#17201C; --ink-2:#47524C; --ink-3:#67706B;
+  --line:#D5DCD7; --line-2:#E4E9E5; --line-strong:#7B9182; --hover:#E8EDE9; --mark:#F1E19A; --mark-ink:#17201C;
   --band-a:#F6F8F5; --band-b:#ECF0ED;
   --pred:#A8640E; --sci:#2B7954; --world:#2D5BA2; --tool:#7A4890;
   --chip-on:#17201C; --chip-on-ink:#F2F4F1;
@@ -30,7 +30,7 @@
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#101513; --surface:#161C19; --ink:#E3EAE5; --ink-2:#A6B2AB; --ink-3:#7A8780;
-    --line:#2B3530; --line-2:#212925; --hover:#1B231F; --mark:#4A4320; --mark-ink:#F3EAC2;
+    --line:#2B3530; --line-2:#212925; --line-strong:#576C61; --hover:#1B231F; --mark:#4A4320; --mark-ink:#F3EAC2;
     --band-a:#141A17; --band-b:#1A211D;
     --pred:#E09F4D; --sci:#5CBD89; --world:#84A9EA; --tool:#C396D9;
     --chip-on:#E3EAE5; --chip-on-ink:#101513;
@@ -39,7 +39,7 @@
 }
 [data-theme="dark"]{
   --bg:#101513; --surface:#161C19; --ink:#E3EAE5; --ink-2:#A6B2AB; --ink-3:#7A8780;
-  --line:#2B3530; --line-2:#212925; --hover:#1B231F; --mark:#4A4320; --mark-ink:#F3EAC2;
+  --line:#2B3530; --line-2:#212925; --line-strong:#576C61; --hover:#1B231F; --mark:#4A4320; --mark-ink:#F3EAC2;
   --band-a:#141A17; --band-b:#1A211D;
   --pred:#E09F4D; --sci:#5CBD89; --world:#84A9EA; --tool:#C396D9;
   --chip-on:#E3EAE5; --chip-on-ink:#101513;
@@ -82,6 +82,8 @@ svg#sp{display:block;min-width:720px;width:100%;height:330px}
 #sp .tick{font:10.5px var(--font-mono);fill:var(--ink-3)}
 #sp .rowlab{font:700 12px var(--font-body);}
 #sp .band{fill:var(--band-b)}
+#sp .band-alt{fill:var(--band-a)}
+#sp .bandlab{font:10.5px var(--font-mono);fill:var(--ink-3)}
 #sp .grid{stroke:var(--line-2);stroke-dasharray:2 3}
 #sp circle{cursor:pointer}
 #sp circle:hover{stroke:var(--ink);stroke-width:2}
@@ -93,12 +95,12 @@ section.controls{position:sticky;top:0;z-index:20;background:var(--bg);
 .ctl-row + .ctl-row{margin-top:var(--sp-3)}
 .ctl-label{font-size:12px;color:var(--ink-3);margin-right:var(--sp-1);flex:none}
 input[type=search],select{font:400 13.5px var(--font-body);color:var(--ink);
-  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r);
   padding:0 var(--sp-3);height:var(--tap);min-height:var(--tap)}
 input[type=search]{flex:1 1 240px;max-width:340px}
 select{cursor:pointer}
 .chip{font:700 12.5px var(--font-body);color:var(--ink-2);background:var(--surface);
-  border:1px solid var(--line);border-radius:999px;padding:0 var(--sp-3);
+  border:1px solid var(--line-strong);border-radius:999px;padding:0 var(--sp-3);
   height:var(--tap);min-height:var(--tap);min-width:var(--tap);cursor:pointer;
   display:inline-flex;align-items:center;gap:6px}
 .chip:hover{background:var(--hover)}
@@ -323,14 +325,15 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){
 function tierOf(i){ return i.tier || '코드·프레임워크' }
 function licClass(i){
   if(i.gated) return 'gated';
+  /* 코드가 MIT·Apache여도 가중치가 비상업이면 '자유'가 아니다 */
+  if(i.noncommercial) return 'care';
   var l = i.license || '';
   if(/^(MIT|Apache-2\.0|BSD-3-Clause|CC0-1\.0)$/.test(l)) return 'free';
   return 'care';
 }
-function groupColor(g){
-  var f = GROUPS.filter(function(x){return x.key===g})[0];
-  return f ? f.css : 'var(--ink-3)';
-}
+var GCOLOR = {};
+GROUPS.forEach(function(g){ GCOLOR[g.key] = g.css });
+function groupColor(g){ return GCOLOR[g] || 'var(--ink-3)' }
 function hl(text, q){
   if(!q) return esc(text);
   var i = String(text).toLowerCase().indexOf(q.toLowerCase());
@@ -356,7 +359,9 @@ function visible(){
   out.sort(function(a,b){
     if(s==='name') return a.name.localeCompare(b.name,'ko');
     if(s==='size') return (b.bytes||0)-(a.bytes||0);
-    if(s==='size-asc') return (a.bytes||-1)-(b.bytes||-1);
+    if(s==='size-asc'){ /* 용량 미확인은 항상 뒤로 */
+      if(!a.bytes !== !b.bytes) return a.bytes ? -1 : 1;
+      return (a.bytes||0)-(b.bytes||0); }
     return popOf(b)-popOf(a);
   });
   return out;
@@ -445,7 +450,7 @@ $('#tbody').addEventListener('keydown', function(e){
 });
 
 /* ── 산점도 ── */
-var W = 1100, H = 330, PAD = {t:26, r:20, b:28, l:78};
+var W = 1100, H = 330, PAD = {t:42, r:20, b:28, l:78};
 function drawChart(){
   var pts = ITEMS.filter(function(i){return i.bytes});
   var min = Math.min.apply(null, pts.map(function(i){return i.bytes}));
@@ -456,12 +461,20 @@ function drawChart(){
   var y = function(gi){ return PAD.t + rowH*gi + rowH/2 };
   var ticks = [1e6,1e7,1e8,1e9,1e10,1e11,1e12];
   var lab = {1e6:'1 MB',1e7:'10 MB',1e8:'100 MB',1e9:'1 GB',1e10:'10 GB',1e11:'100 GB',1e12:'1 TB'};
-  var bands = [[8e8,8e9],[2.4e10,8e10]];
+
+  /* 배경 띠는 임의의 값이 아니라 데이터에 적힌 tier별 실제 용량 범위에서 뽑는다 */
+  var bands = TIERS.filter(function(t){ return t !== '코드·프레임워크' }).map(function(t){
+    var bs = pts.filter(function(i){ return tierOf(i) === t }).map(function(i){ return i.bytes });
+    return bs.length ? {label:t, lo:Math.min.apply(null,bs), hi:Math.max.apply(null,bs)} : null;
+  }).filter(Boolean);
 
   var s = '';
-  bands.forEach(function(b){
-    var x0 = x(Math.max(b[0],min)), x1 = x(Math.min(b[1],max));
-    if(x1>x0) s += '<rect class="band" x="'+x0+'" y="'+PAD.t+'" width="'+(x1-x0)+'" height="'+(H-PAD.t-PAD.b)+'"/>';
+  bands.forEach(function(b, bi){
+    var x0 = x(b.lo), x1 = x(b.hi), w = Math.max(x1-x0, 2);
+    s += '<rect class="band'+(bi%2 ? ' band-alt' : '')+'" x="'+x0.toFixed(1)+'" y="'+PAD.t
+      + '" width="'+w.toFixed(1)+'" height="'+(H-PAD.t-PAD.b)+'"/>'
+      + '<text class="bandlab" x="'+((x0+x1)/2).toFixed(1)+'" y="'+(PAD.t-10)+'" text-anchor="middle">'
+      + esc(b.label)+'</text>';
   });
   ticks.forEach(function(t){
     if(t<min || t>max) return;
@@ -500,7 +513,7 @@ $('#sp').addEventListener('click', function(e){
   state.tier = ''; $('#f-tier').value = '';
   state.lic = ''; $('#f-lic').value = '';
   render();
-  var tr = document.querySelector('tr.row[data-id="'+name.replace(/"/g,'\\"')+'"]');
+  var tr = document.querySelector('tr.row[data-id=' + CSS.escape(name) + ']');
   if(tr){ tr.scrollIntoView({block:'center', behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto':'smooth'});
     if(tr.getAttribute('aria-expanded')!=='true') toggle(tr); tr.focus(); }
 });
